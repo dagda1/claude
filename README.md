@@ -69,9 +69,10 @@ Naming convention is `<category>-<thing>`:
 | `assistant-` | Always-on behavior of the assistant itself |
 | `code-` | Language-agnostic code conventions |
 | `frontend-` | React/MUI/TypeScript conventions |
+| `cdk-` | AWS CDK constructs, IAM, stateful resources, custom resources |
 | `review-` | Process for `/branch-review` |
 
-Add new prefixes as new domains appear (`backend-`, `infra-`, etc.).
+Add new prefixes as new domains appear (`backend-`, `terraform-`, etc.).
 
 ## Add a new workflow
 

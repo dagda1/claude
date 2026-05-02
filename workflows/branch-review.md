@@ -74,6 +74,11 @@ Conditionally load based on what changed (read in parallel with the above):
   - `frontend-zod-validation/SKILL.md` (if API clients / parsers changed)
   - `frontend-react-query/SKILL.md` (only if `@tanstack/react-query` is in the dependency tree)
   - `frontend-testing/SKILL.md` (if any `*.test.tsx` / `*.test.ts` changed)
+- CDK files (`packages/deploy/**`, `*.stack.ts`, files importing `aws-cdk-lib`) → load relevant `cdk-*` skills:
+  - `cdk-construct-conventions/SKILL.md` (always for any CDK change)
+  - `cdk-iam-least-privilege/SKILL.md` (if IAM, role, policy, or `grant*` changes appear)
+  - `cdk-stateful-resources/SKILL.md` (if RDS, S3, DynamoDB, EFS resources changed)
+  - `cdk-custom-resources/SKILL.md` (if `CustomResource` / `Provider` / handler Lambda changed)
 
 For changed files, also read existing similar files in the repo for consistency reference (e.g. if a new CDK construct landed, read 1-2 existing constructs for naming/tagging patterns).
 
@@ -90,13 +95,7 @@ For each area touched, run independent checks concurrently.
 - For ML: features use only pre-match data (no leakage)
 - For migrations: safe under concurrent writes, reversible
 
-**CDK:**
-- Constructs are reusable — props interfaces explicit
-- IAM least privilege — flag any `*` actions or resources without justification
-- Stateful resources have explicit removal policies
-- Tagging consistent with existing constructs
-- No hardcoded account IDs / region values that should be config-driven
-- New CustomResource `properties` bumped if behavior changed (so it re-runs)
+**CDK:** apply the loaded `cdk-*` skills as checklists against the diff. Each skill has a "What to flag in review" section — work through it for each changed file.
 
 **Containers:**
 - No secrets in image layers
