@@ -117,6 +117,57 @@ For each area touched, run independent checks concurrently.
 
 Apply `review-commit-hygiene` against `git log --oneline "$MERGE_BASE..$TARGET"`.
 
+### 6a. Shortcut and architectural-drift scan
+
+Check whether the diff is the shortcut version of work that was supposed to follow a documented design. This is a **HIGH severity** category by default — the whole point of a planning doc or structural test is to prevent the path of least resistance.
+
+**Step 1 — find the relevant planning docs.**
+
+```bash
+ls plans/*.md 2>/dev/null
+git log --since="30 days ago" --name-only "$MERGE_BASE..$TARGET" -- plans/ | sort -u
+git log --oneline "$MERGE_BASE..$TARGET" | grep -iE 'plan|design|spec|rfc'
+```
+
+For each `plans/*.md` referenced or recently modified, read it. Note any **checklist items** it contains.
+
+**Step 2 — verify the diff implements the documented approach.**
+
+For each plan file relevant to this diff:
+- Does the diff tick the checklist items it claims to address?
+- If the plan says "do X by mechanism Y", does the diff use mechanism Y, or did it use a simpler mechanism Z that produces a similar-looking result?
+- If the plan defines tests as gates ("do not ship without these tests passing"), are the tests present and passing?
+- If the plan forbids a pattern (e.g. "no second classifier producing final answers"), does the diff reintroduce it?
+
+A diff that produces working output but bypasses the prescribed structure is a **shortcut**, even if functional. Flag as HIGH.
+
+**Step 3 — anti-pattern scan against the diff.**
+
+Run these checks against `DIFF_OUTPUT`:
+
+| Pattern | What to grep | Severity if found |
+|---------|--------------|-------------------|
+| Test disabled / skipped | `xit\(`, `it\.skip`, `describe\.skip`, `pytest\.mark\.skip`, `@unittest\.skip`, commented-out `it(`/`def test_` lines | HIGH if test enforces a documented invariant |
+| Type-system bypass | `as unknown as`, `: any`, `# type: ignore`, `// @ts-ignore`, `// @ts-expect-error` without comment justifying | HIGH |
+| Defensive null/undefined handling that hides errors | `?\.`, `\?\?`, `\|\|` for non-boolean defaults, `try:\s*\n.*\n\s*except.*:\s*\n\s*pass`, `try {[\s\S]*} catch[\s\S]*\{[\s\S]*\}` empty catch | MEDIUM (HIGH if the swallowed error was previously propagating) |
+| Parallel implementation of an existing capability | New module/class/function whose name overlaps with an existing one (`grep -i` the new symbol against the rest of the repo) | HIGH if both produce final answers; MEDIUM otherwise |
+| Reintroduced forbidden pattern | `try:\s*\n[\s\S]*finally:` for cleanup, `with .*Session\(`, `with open\(.*\) as ` for short-lived files, banner-import hacks in CDK bundling | MEDIUM (HIGH if a CLAUDE.md rule explicitly bans it) |
+| Hardcoded secrets or magic values | `secret`, `password`, `token`, IP addresses, URLs that look prod | HIGH |
+| "While I'm here" scope creep | Files changed that have no connection to the commit message's stated purpose; reformatting commits mixed with logic commits | MEDIUM |
+| Half-finished migration | New code path added but old path not removed; new dataclass fields added but call sites still read old fields; new tests added but old tests asserting opposite behaviour still pass | HIGH |
+| Disabled lint/type-check rule | New `// eslint-disable`, `# noqa`, `# pragma: no cover`, additions to `tsconfig.exclude`, `pyrightconfig` exclusions | MEDIUM |
+| Removed test without replacement | A `*.test.*` file deleted or test cases removed with no equivalent test added elsewhere | HIGH |
+
+**Step 4 — write findings under a dedicated subsection.**
+
+In the report's "Findings" section, add findings from this scan with the prefix `[SHORTCUT]` in the title so they're scannable. Each finding must:
+- Quote the planning doc requirement that was bypassed (if applicable), with file path.
+- Show the diff's chosen implementation.
+- Describe the prescribed implementation.
+- Explain why the chosen path is the shortcut (e.g. "produces the same output for happy path but breaks invariant X").
+
+If no shortcuts found, add a single positive: "**Followed the documented design.** [Plan name] checklist items are all addressed by the actual implementation, no anti-patterns detected."
+
 ### 7. Identify positives
 
 Apply `review-report-format`'s positives guidance — 3–5 specific, concrete positives referencing actual code decisions.
