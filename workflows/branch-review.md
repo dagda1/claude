@@ -1,7 +1,7 @@
 ---
 description: Comprehensive branch review against project standards. Writes report to ~/code/pr/Reviews/<branch>.md.
 argument-hint: [branch] [base]
-allowed-tools: Bash, Read, Grep, Glob
+allowed-tools: Bash, Read, Grep, Glob, Task
 ---
 
 # Branch Review
@@ -60,25 +60,25 @@ A single branch may touch multiple areas. Classify all changed files:
 Always load (read in parallel):
 - `CLAUDE.md` (project rules — DRY, no comments, error context, defensive programming bans, etc.)
 - `~/.claude/rules/engineering-principles.md` (cognitive patterns: blast radius, boring by default, reversibility)
-- All `review-*` skills from `.claude/skills/`:
-  - `review-pr-size/SKILL.md`
-  - `review-commit-hygiene/SKILL.md`
-  - `review-secret-scanning/SKILL.md`
-  - `review-report-format/SKILL.md`
+- **All** `review-*` skills. Discover them by glob rather than a fixed list so newly added ones are never missed:
 
-Conditionally load based on what changed (read in parallel with the above):
-- Frontend files (`*.tsx`, `*.ts` in `apps/frontend/`) → load relevant `frontend-*` skills:
-  - `frontend-react-typescript/SKILL.md` (always for `.tsx` / `.ts`)
-  - `frontend-mui-theming/SKILL.md` (if any MUI imports / `styles.ts` files changed)
-  - `frontend-component-structure/SKILL.md` (if components added or moved)
-  - `frontend-zod-validation/SKILL.md` (if API clients / parsers changed)
-  - `frontend-react-query/SKILL.md` (only if `@tanstack/react-query` is in the dependency tree)
-  - `frontend-testing/SKILL.md` (if any `*.test.tsx` / `*.test.ts` changed)
-- CDK files (`packages/deploy/**`, `*.stack.ts`, files importing `aws-cdk-lib`) → load relevant `cdk-*` skills:
-  - `cdk-construct-conventions/SKILL.md` (always for any CDK change)
-  - `cdk-iam-least-privilege/SKILL.md` (if IAM, role, policy, or `grant*` changes appear)
-  - `cdk-stateful-resources/SKILL.md` (if RDS, S3, DynamoDB, EFS resources changed)
-  - `cdk-custom-resources/SKILL.md` (if `CustomResource` / `Provider` / handler Lambda changed)
+```bash
+ls .claude/skills/review-*/SKILL.md 2>/dev/null
+```
+
+Read every path returned.
+
+Conditionally load based on what changed. Again, glob the relevant family and read all matches rather than naming individual files:
+
+```bash
+# only if frontend files changed
+ls .claude/skills/frontend-*/SKILL.md 2>/dev/null
+# only if CDK files changed
+ls .claude/skills/cdk-*/SKILL.md 2>/dev/null
+```
+
+- Frontend files (`*.tsx`, `*.ts` in `apps/frontend/`) → read all `frontend-*` skills, then apply each only where its subject matches the diff (e.g. MUI theming skill only if styling/`styles.ts` changed, react-query skill only if `@tanstack/react-query` is in the tree, testing skill only if `*.test.tsx`/`*.test.ts` changed).
+- CDK files (`packages/deploy/**`, `*.stack.ts`, files importing `aws-cdk-lib`) → read all `cdk-*` skills, then apply each only where relevant (IAM skill if `grant*`/policy/role changes, stateful-resources skill if RDS/S3/DynamoDB/EFS changed, custom-resources skill if `CustomResource`/`Provider`/handler Lambda changed).
 
 For changed files, also read existing similar files in the repo for consistency reference (e.g. if a new CDK construct landed, read 1-2 existing constructs for naming/tagging patterns).
 
@@ -149,7 +149,8 @@ Run these checks against `DIFF_OUTPUT`:
 |---------|--------------|-------------------|
 | Test disabled / skipped | `xit\(`, `it\.skip`, `describe\.skip`, `pytest\.mark\.skip`, `@unittest\.skip`, commented-out `it(`/`def test_` lines | HIGH if test enforces a documented invariant |
 | Type-system bypass | `as unknown as`, `: any`, `# type: ignore`, `// @ts-ignore`, `// @ts-expect-error` without comment justifying | HIGH |
-| Defensive null/undefined handling that hides errors | `?\.`, `\?\?`, `\|\|` for non-boolean defaults, `try:\s*\n.*\n\s*except.*:\s*\n\s*pass`, `try {[\s\S]*} catch[\s\S]*\{[\s\S]*\}` empty catch | MEDIUM (HIGH if the swallowed error was previously propagating) |
+| Error-swallowing | `try:\s*\n.*\n\s*except.*:\s*\n\s*pass` (Python bare pass), empty JS catch blocks `catch[\s\S]*?\{\s*\}` | MEDIUM (HIGH if the swallowed error was previously propagating) |
+| Null-handling that masks a real error | `?.`, `??`, `\|\|` defaults — **do NOT auto-flag; these are normal TS.** Only flag a specific occurrence where the optional access or default hides a value that should never be missing (e.g. silently defaulting a required ID). Read the surrounding code and justify per-instance. | MEDIUM, per justified instance only |
 | Parallel implementation of an existing capability | New module/class/function whose name overlaps with an existing one (`grep -i` the new symbol against the rest of the repo) | HIGH if both produce final answers; MEDIUM otherwise |
 | Reintroduced forbidden pattern | `try:\s*\n[\s\S]*finally:` for cleanup, `with .*Session\(`, `with open\(.*\) as ` for short-lived files, banner-import hacks in CDK bundling | MEDIUM (HIGH if a CLAUDE.md rule explicitly bans it) |
 | Hardcoded secrets or magic values | `secret`, `password`, `token`, IP addresses, URLs that look prod | HIGH |
