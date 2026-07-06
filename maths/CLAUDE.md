@@ -38,3 +38,13 @@ WRONG — do not do this:
 
 Front: How do you find the derivative of $x^2$?   ← not in a code block, $ will render
 Front: `\text{How do you find the derivative of } x^2?`   ← English wrapped in \text{}
+
+## Writing rules
+
+- Short sentences. One idea per sentence.
+- Plain words only. No idioms, no casual filler words in math explanations.
+- Never use em-dashes (—) or arrows (→) in prose.
+- Do not assume university-level math background. Define every symbol when first used.
+- Answer only the question asked. Do not explain why something works unless asked.
+- Keep answers to 2-3 sentences unless more is explicitly requested.
+- Flashcards: minimal text, one fact per card.
