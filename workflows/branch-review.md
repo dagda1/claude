@@ -1,5 +1,5 @@
 ---
-description: Comprehensive branch review against project standards. Writes report to ~/code/pr/Reviews/<branch>.md.
+description: Comprehensive branch review against project standards. Writes report to ~/code/pr/Reviews/<branch>.md, then loops fix→re-review until the verdict is APPROVE.
 argument-hint: [branch] [base]
 allowed-tools: Bash, Read, Grep, Glob, Task
 ---
@@ -226,6 +226,14 @@ Report rules:
 ### 9. Summary and cleanup
 
 Print verdict + key findings and `Review written to <path>`, then `git checkout "$ORIGINAL"`.
+
+### 10. Loop until clean
+
+If the verdict is `APPROVE`, stop here.
+
+Otherwise, invoke the `loop` skill with **no interval** (self-paced) so it resumes itself via `ScheduleWakeup` across as many turns as it takes, instead of you looping inline. Prompt:
+
+> Fix every "Required (blocking merge)" and High-severity item in `$REVIEW_FILE` on branch `$TARGET`. **Do not commit.** Stage the fix with `git add` and run `git diff --staged` so the changes are visible for the user to inspect, then stop the loop (`ScheduleWakeup` with `stop: true`) and tell the user what you staged and why — wait for them to review and commit it themselves. Once the user tells you they've committed, re-invoke `/loop` on this same prompt: re-run `/branch-review $TARGET $BASE` from scratch against the updated diff (do not reuse the old report), and repeat the fix → stage → stop cycle for whatever it flags next. Only skip the stop-and-wait step once a review comes back `APPROVE` with zero Required action items — then just report done.
 
 ## Assessment scale
 
