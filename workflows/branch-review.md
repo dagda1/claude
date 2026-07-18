@@ -10,6 +10,8 @@ Review the current (or specified) branch against project standards. Write a repo
 
 Arguments: `$1` — branch to review (default: current branch). `$2` — base branch (default: `main`).
 
+**Dispatch (Claude Code):** run steps 1–9 in a fresh context — invoke the `reviewer` subagent via Task with branch, base and report path, then continue from step 10 with its verdict. Never review inline: the context that wrote the code approves its own work. Run steps 1–9 inline only where subagents are unavailable (e.g. Devin).
+
 ## Steps
 
 ### 1. Setup and gather context

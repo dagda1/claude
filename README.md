@@ -8,6 +8,10 @@ Personal repo of reusable Claude Code skills and workflows. Symlinked into proje
 ~/claude/
 ├── workflows/         ← symlinks into <project>/.claude/commands/
 │   └── branch-review.md
+├── agents/            ← symlinks into <project>/.claude/agents/
+│   └── reviewer.md    ← fresh-context verifier used by /branch-review
+├── templates/
+│   └── AGENTS.md      ← copied (not symlinked) into new projects; CLAUDE.md links to it
 └── skills/            ← symlinks into <project>/.claude/skills/
     ├── assistant-*/   ← always-on behavior (communication, modification policy, output)
     ├── code-*/        ← language-agnostic conventions (errors, types, style, tests)
@@ -73,6 +77,14 @@ Naming convention is `<category>-<thing>`:
 | `review-` | Process for `/branch-review` |
 
 Add new prefixes as new domains appear (`backend-`, `terraform-`, etc.).
+
+## Subagents
+
+Agents live in `agents/` as markdown with YAML frontmatter (`name`, `description`, `tools`), symlinked to `<project>/.claude/agents/` by `install.sh`. The `reviewer` agent runs `/branch-review` steps 1–9 in a fresh context via the Task tool, so the verdict never comes from the same context that wrote the code. The main context keeps the fix loop (step 10).
+
+## AGENTS.md / CLAUDE.md
+
+Each project gets one canonical context file, `AGENTS.md` (read natively by Devin, Codex, Cursor), with `CLAUDE.md` as a symlink to it for Claude Code. `install.sh` copies `templates/AGENTS.md` into the project if absent and creates the link. Per-project content — edit it in the project, keep it under 300 lines, prune on touch.
 
 ## Add a new workflow
 

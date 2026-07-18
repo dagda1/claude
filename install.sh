@@ -10,6 +10,19 @@ PROJECT="$(cd "$PROJECT" && pwd)"
 mkdir -p "$PROJECT/.claude/commands" "$PROJECT/.devin/workflows"
 
 ln -sfn "$CLAUDE_REPO/skills" "$PROJECT/.claude/skills"
+ln -sfn "$CLAUDE_REPO/agents" "$PROJECT/.claude/agents"
+
+# AGENTS.md is the canonical per-project context file; CLAUDE.md links to it so
+# Claude Code and AGENTS.md-readers (Devin, Codex, Cursor) share one source of truth.
+if [ ! -e "$PROJECT/AGENTS.md" ]; then
+  cp "$CLAUDE_REPO/templates/AGENTS.md" "$PROJECT/AGENTS.md"
+  echo "Created $PROJECT/AGENTS.md from template — edit it for this project."
+fi
+if [ ! -e "$PROJECT/CLAUDE.md" ]; then
+  ln -s AGENTS.md "$PROJECT/CLAUDE.md"
+elif [ ! -L "$PROJECT/CLAUDE.md" ]; then
+  echo "NOTE: $PROJECT/CLAUDE.md exists as a regular file — merge it into AGENTS.md and replace with: ln -sf AGENTS.md CLAUDE.md"
+fi
 
 for wf in "$CLAUDE_REPO"/workflows/*.md; do
   name="$(basename "$wf")"
@@ -22,6 +35,6 @@ for wf in "$CLAUDE_REPO"/workflows/*.md; do
 done
 
 echo "Installed into $PROJECT/.claude and $PROJECT/.devin:"
-ls -la "$PROJECT/.claude/skills" "$PROJECT/.claude/commands" "$PROJECT/.devin/workflows"
+ls -la "$PROJECT/.claude/skills" "$PROJECT/.claude/agents" "$PROJECT/.claude/commands" "$PROJECT/.devin/workflows"
 echo
 echo "Restart any running Claude Code / Devin session in $PROJECT to pick up the commands."
