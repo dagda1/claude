@@ -1,16 +1,16 @@
 ---
-description: Scaffold a new pnpm monorepo (Volta, ESLint, a leaf UI package, a bundling+code-splitting frontend, an api package, vitest per package) modelled on ../cuttingedge and ../harbour-ui, verified by a self-paced loop.
+description: Scaffold a pnpm monorepo (Volta, ESLint, leaf UI package, code-splitting frontend, api package, vitest per package), verified by a self-paced loop.
 argument-hint: [path] [name]
 allowed-tools: Bash, Read, Write, Edit, Glob
 ---
 
 # New Monorepo
 
-Scaffold a new pnpm-workspace monorepo at `$1` (default: current directory), modelled on `../cuttingedge` and `../harbour-ui`: Volta-pinned Node/pnpm, root workspace config, ESLint, a leaf UI package with everything externalised, a bundling+code-splitting frontend app, an API package, one vitest test per package. Code stays minimal — just enough to prove build, lint, typecheck, and test work.
+Scaffold a pnpm-workspace monorepo at `$1`, modelled on `../cuttingedge` and `../harbour-ui`. Code stays minimal — just enough to prove build, lint, typecheck, and test work.
 
 Arguments: `$1` — target directory (default `.`). `$2` — repo name (default: basename of target).
 
-**Package boundary rule**: leaf UI packages (`packages/ui`, future siblings) build in Vite library mode, externalising every dependency — unbundled `preserveModules` ESM, never a bundle. Only `apps/frontend` bundles and vendor-splits. `packages/api` isn't a library, so it just compiles with `tsc`.
+**Package boundary rule**: leaf UI packages build in Vite library mode, externalising every dependency — unbundled `preserveModules` ESM, never a bundle. Only `apps/frontend` bundles and vendor-splits; `packages/api` just compiles with `tsc`.
 
 ## Steps
 
@@ -102,7 +102,7 @@ Write shared `tsconfig-base.json`:
 }
 ```
 
-Write root `eslint.config.mjs` (self-contained flat config, no private `@cutting/eslint-config`):
+Write root `eslint.config.mjs` (self-contained flat config):
 
 ```js
 import js from '@eslint/js';
@@ -530,13 +530,13 @@ describe('GET /health', () => {
 });
 ```
 
-### 6. Install once, then hand off to a self-paced loop until clean
+### 6. Install, then loop until clean
 
 ```bash
 pnpm install
 ```
 
-Invoke the `loop` skill with **no interval** (self-paced) so it resumes itself via `ScheduleWakeup` across as many turns as needed, instead of looping inline in one response. Prompt:
+Invoke the `loop` skill with **no interval** (self-paced) so it resumes via `ScheduleWakeup` across turns. Prompt:
 
 > Run in order: `pnpm --filter ui build`, `pnpm --filter frontend build`, `pnpm --filter api build`, `pnpm lint`, `pnpm typecheck`, `pnpm test`. On failure, fix the underlying code (never weaken/delete the check) and re-run from the top — a fix in one package can break another. Verify `apps/frontend/dist` has a `vendor-react` chunk and a `Panel` chunk, and `packages/ui/dist/esm` keeps `react` as a bare import (grep `from "react"`, not inlined). Call `ScheduleWakeup` with `stop: true` once everything is clean on a full run.
 
