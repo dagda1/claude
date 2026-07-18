@@ -12,6 +12,8 @@ Personal repo of reusable Claude Code skills and workflows. Symlinked into proje
 │   └── reviewer.md    ← fresh-context verifier used by /branch-review
 ├── templates/
 │   └── AGENTS.md      ← copied (not symlinked) into new projects; CLAUDE.md links to it
+├── .claude/
+│   └── settings.json  ← shared permissions, symlinked into <project>/.claude/settings.json
 └── skills/            ← symlinks into <project>/.claude/skills/
     ├── assistant-*/   ← always-on behavior (communication, modification policy, output)
     ├── code-*/        ← language-agnostic conventions (errors, types, style, tests)
@@ -85,6 +87,10 @@ Agents live in `agents/` as markdown with YAML frontmatter (`name`, `description
 ## AGENTS.md / CLAUDE.md
 
 Each project gets one canonical context file, `AGENTS.md` (read natively by Devin, Codex, Cursor), with `CLAUDE.md` as a symlink to it for Claude Code. `install.sh` copies `templates/AGENTS.md` into the project if absent and creates the link. Per-project content — edit it in the project, keep it under 300 lines, prune on touch.
+
+## Permissions
+
+`.claude/settings.json` here is the shared permission set, symlinked into every project by `install.sh`: read-only commands (ls, cat, grep, rg, find, git status/diff/log/show/branch/fetch) run without prompting, `rm` always asks, `aws` is denied outright. Precedence is deny > ask > allow. Machine- or project-specific additions go in the project's `.claude/settings.local.json`, which is unversioned. If a project already has a real (non-symlink) settings.json, install.sh leaves it and tells you to merge.
 
 ## Add a new workflow
 

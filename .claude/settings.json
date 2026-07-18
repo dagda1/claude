@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(git status)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git fetch:*)",
+      "Bash(git merge-base:*)",
+      "Bash(git remote get-url:*)",
+      "Bash(pnpm --version)",
+      "Bash(npm view:*)"
+    ],
+    "ask": [
+      "Bash(rm:*)",
+      "Bash(rm)"
+    ],
+    "deny": [
+      "Bash(aws:*)",
+      "Bash(aws)"
+    ]
+  }
+}

@@ -12,6 +12,14 @@ mkdir -p "$PROJECT/.claude/commands" "$PROJECT/.devin/workflows"
 ln -sfn "$CLAUDE_REPO/skills" "$PROJECT/.claude/skills"
 ln -sfn "$CLAUDE_REPO/agents" "$PROJECT/.claude/agents"
 
+# Shared permissions: reads allowed, rm asks, aws denied.
+# Per-project/machine extras go in .claude/settings.local.json (unversioned).
+if [ -f "$PROJECT/.claude/settings.json" ] && [ ! -L "$PROJECT/.claude/settings.json" ]; then
+  echo "NOTE: $PROJECT/.claude/settings.json exists as a regular file — merge it into settings.local.json to adopt the shared one."
+else
+  ln -sfn "$CLAUDE_REPO/.claude/settings.json" "$PROJECT/.claude/settings.json"
+fi
+
 # AGENTS.md is the canonical per-project context file; CLAUDE.md links to it so
 # Claude Code and AGENTS.md-readers (Devin, Codex, Cursor) share one source of truth.
 if [ ! -e "$PROJECT/AGENTS.md" ]; then
