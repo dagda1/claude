@@ -112,3 +112,26 @@ return await fetchMatchData(matchId);
 - `.then(...).catch(() => {})` that swallows
 - Fire-and-forget promises without `.catch` or `await`
 - `try/catch` returning a fallback value that hides the failure
+
+## Subprocesses — a null exit code is not success
+
+`spawnSync`/`execSync` failures are not exceptions. A missing binary sets
+`result.error` and leaves `result.status` as `null` — defaulting that to 0
+turns a process that never ran into a "successful" one.
+
+```ts
+// BAD — tsx missing → status null → exits 0 → empty build published
+const result = spawnSync(tsxBin, args, { stdio: 'inherit' });
+process.exit(result.status ?? 0);
+
+// GOOD — fail hard on spawn error, propagate real status
+const result = spawnSync(tsxBin, args, { stdio: 'inherit' });
+assert(!result.error, `failed to spawn ${tsxBin}: ${result.error?.message}`);
+assert(result.status === 0, `${tsxBin} exited with ${result.status}`);
+```
+
+## What to flag in review (subprocesses)
+
+- `result.status ?? 0` or any default-to-success on a null exit code
+- `spawnSync`/`exec` results used without checking `result.error`
+- Child process failures logged but the parent still exits 0
