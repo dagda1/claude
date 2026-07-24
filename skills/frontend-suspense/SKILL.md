@@ -41,7 +41,8 @@ function WorkItems() {
 
 ## Skeletons
 
-- Build from MUI `<Skeleton />` (`variant="text" | "rectangular" | "circular"`), sized to the real content.
+- A skeleton is a greyed-out placeholder shaped like the real content — text lines, rectangles, circles sized to what will load.
+- On MUI, build it from `<Skeleton />` (`variant="text" | "rectangular" | "circular"`), sized to the real content. Otherwise use the design system's skeleton primitive, or a plain element with a subtle pulse/shimmer.
 - Match the real layout's structure and count — a list skeleton renders the same number of rows the list usually shows.
 - Keep the skeleton next to the component it stands in for, so the two stay in sync when the layout changes.
 
