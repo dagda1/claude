@@ -1,5 +1,5 @@
 ---
-description: Comprehensive branch review against project standards. Writes report to ~/code/pr/Reviews/<branch>.md, then loops fix→re-review until the verdict is APPROVE.
+description: Comprehensive branch review against project standards. Writes report to ~/code/pr/Reviews/<branch>.md, then stops and proposes fixes for the user to approve before any are applied.
 argument-hint: [branch] [base]
 allowed-tools: Bash, Read, Grep, Glob, Task
 ---
@@ -229,13 +229,19 @@ Report rules:
 
 Print verdict + key findings and `Review written to <path>`, then `git checkout "$ORIGINAL"`.
 
-### 10. Loop until clean
+### 10. Stop and propose fixes — wait for approval
 
-If the verdict is `APPROVE`, stop here.
+If the verdict is `APPROVE`, report done and stop.
 
-Otherwise, invoke the `loop` skill with **no interval** (self-paced) so it resumes itself via `ScheduleWakeup` across as many turns as it takes, instead of you looping inline. Prompt:
+Otherwise **do not touch any files**. Present a short numbered list of the proposed fixes for every "Required (blocking merge)" and High-severity item in `$REVIEW_FILE`. Each proposed fix line must be:
 
-> Fix every "Required (blocking merge)" and High-severity item in `$REVIEW_FILE` on branch `$TARGET`. **Do not commit.** Stage the fix with `git add` and run `git diff --staged` so the changes are visible for the user to inspect, then stop the loop (`ScheduleWakeup` with `stop: true`) and tell the user what you staged and why — wait for them to review and commit it themselves. Once the user tells you they've committed, re-invoke `/loop` on this same prompt: re-run `/branch-review $TARGET $BASE` from scratch against the updated diff (do not reuse the old report), and repeat the fix → stage → stop cycle for whatever it flags next. Only skip the stop-and-wait step once a review comes back `APPROVE` with zero Required action items — then just report done.
+`N. file:line — <the change> — conforms to: <skill/rule name>`
+
+The `conforms to:` clause is mandatory and must name the specific loaded skill (`.claude/skills/*/SKILL.md`) or project rule (CLAUDE.md / engineering-principles.md) that the fix satisfies. Before proposing a fix, re-read the relevant skill's "What to flag in review" / standards section and make the fix match it — do not invent an ad-hoc fix. If a proposed change would violate any loaded skill (e.g. hardcoding a color to silence a lint, adding inline `sx`, skipping a companion test file), do not propose it: say which skill it conflicts with and leave the finding for the user to decide.
+
+Then stop and wait for the user to approve. Do not apply, stage, or commit anything until the user explicitly OKs. The user may approve all, approve a subset (e.g. "do 1 and 3"), edit the list, or decline.
+
+Only after approval, apply the approved fixes. Then re-check the staged changes against the same loaded skills: re-run the relevant skill checklists over `git diff --staged`, and if any staged change violates a skill, revert that change and report it rather than staging a skill-breaking fix. Finally `git add` and `git diff --staged` so the user can inspect, and stop again — let the user commit themselves. Never auto-loop into a re-review; if the user wants another pass, they re-run `/branch-review`.
 
 ## Assessment scale
 
