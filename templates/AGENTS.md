@@ -28,7 +28,7 @@ Only list commands verified in this repo. If a command needs env vars, say which
 
 - <naming, file placement, error handling, testing style — only rules that differ from ecosystem defaults>
 - API endpoints are constants in a shared `urls` module — never inline the same URL string twice. See the `frontend-api-calls` skill.
-- Import from a package's barrel, not per-component subpaths; side-effect modules get their own subpath. See the `bundle-imports` skill.
+- Import from a package's barrel, not per-component subpaths; side-effect modules get their own subpath. See the `frontend-bundle-imports` skill.
 - Components sit at the correct atomic level (atoms/molecules/templates/pages) with companion files colocated, no barrel `index.ts`, 200-line cap. See the `frontend-component-structure` skill.
 - No boolean flags for options that select a mode or variant — use a named string-literal union. See the `frontend-no-boolean-params` skill.
 - No defensive fallbacks (`?? ''`, `|| 'Unknown'`) — one owner decides the fallback and it lives at the render boundary. See the `code-no-defensive-fallbacks` skill.

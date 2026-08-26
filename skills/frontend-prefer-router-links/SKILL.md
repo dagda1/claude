@@ -1,6 +1,6 @@
 ---
 name: prefer-router-links
-description: Prefer react-router Link/NavLink for user-clickable navigation; reserve useNavigate for imperative navigation only, in Harbour frontend
+description: Prefer react-router Link/NavLink for user-clickable navigation; reserve useNavigate for imperative navigation only
 triggers:
   - model
   - user
@@ -30,7 +30,7 @@ Anything a user clicks to go somewhere is a link and must render a real anchor v
 // GOOD — useNavigate is correct here (post-async, not a click target)
 createExecution.mutate(payload, {
   onSuccess: (execution) =>
-    navigate(`${routes.harbourNext}/executions/${execution.uuid}`),
+    navigate(`${routes.dashboard}/executions/${execution.uuid}`),
 });
 ```
 

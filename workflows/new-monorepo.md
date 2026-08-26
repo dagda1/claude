@@ -6,7 +6,7 @@ allowed-tools: Bash, Read, Write, Edit, Glob
 
 # New Monorepo
 
-Scaffold a pnpm-workspace monorepo at `$1`, modelled on `../cuttingedge` and `../harbour-ui`. Code stays minimal — just enough to prove build, lint, typecheck, and test work.
+Scaffold a pnpm-workspace monorepo at `$1`, modelled on an existing pnpm-workspace repo in the same parent directory. Code stays minimal — just enough to prove build, lint, typecheck, and test work.
 
 Arguments: `$1` — target directory (default `.`). `$2` — repo name (default: basename of target).
 

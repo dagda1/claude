@@ -46,7 +46,7 @@ A branch may touch multiple areas:
 |--------|------|
 | `*.tsx`, `*.ts` in `apps/frontend/` | Frontend (React/MUI) — CLAUDE.md frontend rules, no inline `sx`, no hardcoded colors, `Readonly<Props>`, explicit return types |
 | Data-fetching hooks (`useQuery`, `useMutation`, `urql`, `xior`, `fetch`) | API calls — `frontend-api-calls` skill: URLs from the shared `urls` constants module, no `fetch`, every response Zod-parsed |
-| `package.json` `exports`, `vite.config.*` aliases, `lazy(() => import(...))` | Bundle & imports — `bundle-imports` skill: barrel imports by default, no per-component subpath exports, side-effect modules on their own subpath |
+| `package.json` `exports`, `vite.config.*` aliases, `lazy(() => import(...))` | Bundle & imports — `frontend-bundle-imports` skill: barrel imports by default, no per-component subpath exports, side-effect modules on their own subpath |
 | New or moved files under `components/` | Component architecture — `frontend-component-structure` skill: correct atomic level, companion files present, no barrel `index.ts`, naming, reuse before building |
 | New or changed function signatures and component props | API ergonomics — `frontend-no-boolean-params` skill: mode/variant options are string-literal unions, not booleans |
 | Any code handling optional values (`??`, `\|\|`, ternary defaults) | Fallbacks — `code-no-defensive-fallbacks` skill: one owner per fallback, no `?? ''`, no default invented to satisfy a type |
@@ -68,10 +68,8 @@ Always load (read in parallel):
 - All `code-*` skills (language-agnostic code standards), same glob approach: `ls .claude/skills/code-*/SKILL.md`
 
 Conditionally, glob the family and read all matches:
-- Frontend files changed → `ls .claude/skills/frontend-*/SKILL.md`, then apply each only where its subject matches the diff (MUI theming skill only if styling changed, react-query skill only if `@tanstack/react-query` in the tree, `frontend-api-calls` only if data-fetching hooks or HTTP calls changed, `frontend-no-boolean-params` only if function signatures or component props changed, `frontend-no-render-functions` only if `*.tsx` or `styles.ts` changed, testing skill only if `*.test.ts*` changed).
+- Frontend files changed → `ls .claude/skills/frontend-*/SKILL.md`, then apply each only where its subject matches the diff (MUI theming skill only if styling changed, react-query skill only if `@tanstack/react-query` in the tree, `frontend-api-calls` only if data-fetching hooks or HTTP calls changed, `frontend-no-boolean-params` only if function signatures or component props changed, `frontend-no-render-functions` only if `*.tsx` or `styles.ts` changed, `frontend-bundle-imports` only if package `exports`, bundler config or `lazy()` route imports changed, testing skill only if `*.test.ts*` changed).
 - CDK files changed (`packages/deploy/**`, `*.stack.ts`, imports of `aws-cdk-lib`) → `ls .claude/skills/cdk-*/SKILL.md`, then apply each only where relevant (IAM skill if `grant*`/policy/role changes, stateful-resources if RDS/S3/DynamoDB/EFS changed, custom-resources if `CustomResource`/`Provider`/handler Lambda changed).
-
-- Package `exports`, bundler config or `lazy()` route imports changed → read `.claude/skills/bundle-imports/SKILL.md`.
 
 For changed files, also read 1-2 existing similar files in the repo as consistency reference (naming/tagging patterns).
 

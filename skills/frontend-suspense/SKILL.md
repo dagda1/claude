@@ -1,6 +1,6 @@
 ---
 name: suspense
-description: Use React Suspense for data fetching so sections stream in independently instead of blocking on isLoading; skeletons are the fallback of choice, in Harbour frontend
+description: Use React Suspense for data fetching so sections stream in independently instead of blocking on isLoading; skeletons are the fallback of choice
 triggers:
   - model
   - user
