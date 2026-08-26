@@ -1,6 +1,6 @@
 ---
-name: no-boolean-params
-description: Avoid cryptic boolean parameters — prefer string-literal union types for options that affect behaviour or styling in Harbour frontend
+name: frontend-no-boolean-params
+description: Avoid cryptic boolean parameters — prefer string-literal union types for options that select a mode, variant or theme. Use when reviewing or writing function signatures and component props.
 triggers:
   - model
   - user

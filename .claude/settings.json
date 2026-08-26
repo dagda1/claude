@@ -30,7 +30,21 @@
     ],
     "deny": [
       "Bash(aws:*)",
-      "Bash(aws)"
+      "Bash(aws)",
+      "Bash(pnpm storybook:*)",
+      "Bash(pnpm storybook)",
+      "Bash(pnpm dev:*)",
+      "Bash(pnpm dev)",
+      "Bash(pnpm start:*)",
+      "Bash(pnpm start)",
+      "Bash(pnpm serve:*)",
+      "Bash(pnpm serve)",
+      "Bash(storybook:*)",
+      "Bash(npx storybook:*)",
+      "Bash(vite:*)",
+      "Bash(npx vite:*)",
+      "Bash(pnpm test:watch:*)",
+      "Bash(vitest --watch:*)"
     ]
   }
 }

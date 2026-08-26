@@ -23,14 +23,14 @@ Don't gate a component behind `if (isLoading) return <Spinner />`. That blocks t
 ```tsx
 // BAD — blocks the subtree, layout collapses to a centred spinner
 function WorkItems() {
-  const { data, isLoading } = useQuery({ queryKey: ['workItems'], queryFn });
+  const { data, isLoading } = useQuery({ queryKey: ["workItems"], queryFn });
   if (isLoading) return <Spinner />;
   return <WorkItemList items={data} />;
 }
 
 // GOOD — component assumes data exists; boundary owns the fallback
 function WorkItems() {
-  const { data } = useSuspenseQuery({ queryKey: ['workItems'], queryFn });
+  const { data } = useSuspenseQuery({ queryKey: ["workItems"], queryFn });
   return <WorkItemList items={data} />;
 }
 
@@ -41,14 +41,19 @@ function WorkItems() {
 
 ## Skeletons
 
-- A skeleton is a greyed-out placeholder shaped like the real content — text lines, rectangles, circles sized to what will load.
-- On MUI, build it from `<Skeleton />` (`variant="text" | "rectangular" | "circular"`), sized to the real content. Otherwise use the design system's skeleton primitive, or a plain element with a subtle pulse/shimmer.
+- Build from MUI `<Skeleton />` (`variant="text" | "rectangular" | "circular"`), sized to the real content.
 - Match the real layout's structure and count — a list skeleton renders the same number of rows the list usually shows.
 - Keep the skeleton next to the component it stands in for, so the two stay in sync when the layout changes.
 
 ## Errors
 
+The goal is to keep the page rendering. A failed request must cost the user the smallest possible piece of the screen.
+
 - Pair each Suspense boundary with an error boundary — suspense handles the pending state, the error boundary handles the thrown error (REST: `react-query` skill's error-propagation rule; GraphQL/urql: `api-calls` skill). Don't catch and return a default from the query function.
+- **The boundary's position is the blast radius.** A throw travels to the nearest boundary above it, so a section with none of its own lands on the app root boundary and blanks the screen.
+- **A boundary replaces the component that threw; it can never resume it.** A boundary around a page whose own hook throws still hides that page, so the read belongs in the piece that needs it.
+- **Ambient data must not suspend.** Data read across the app and required to be correct by none of it — preferences, flags, locale — takes the page down when it throws. Read it with `useQuery`, fall back to the schema defaults, and alert.
+- **A fallback must not depend on the data that failed**, or it throws again and escapes to the parent boundary.
 
 ## What to flag in review
 
@@ -57,3 +62,7 @@ function WorkItems() {
 - A single Suspense boundary at the app/page root making the whole screen blank while one section loads — each independently-fetching section needs its own boundary and skeleton.
 - Fallbacks that are bare spinners or `null` where a layout-matching skeleton belongs.
 - A Suspense boundary with no accompanying error boundary.
+- `useSuspenseQuery` for preferences, flags or any other ambient data read across the app.
+- A page whose top-level hook suspends or throws, so one failed request costs the entire page.
+- An error-boundary fallback that renders the same data the boundary just failed on.
+

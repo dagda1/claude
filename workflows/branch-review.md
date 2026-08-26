@@ -45,6 +45,12 @@ A branch may touch multiple areas:
 | Signal | Area |
 |--------|------|
 | `*.tsx`, `*.ts` in `apps/frontend/` | Frontend (React/MUI) — CLAUDE.md frontend rules, no inline `sx`, no hardcoded colors, `Readonly<Props>`, explicit return types |
+| Data-fetching hooks (`useQuery`, `useMutation`, `urql`, `xior`, `fetch`) | API calls — `frontend-api-calls` skill: URLs from the shared `urls` constants module, no `fetch`, every response Zod-parsed |
+| `package.json` `exports`, `vite.config.*` aliases, `lazy(() => import(...))` | Bundle & imports — `bundle-imports` skill: barrel imports by default, no per-component subpath exports, side-effect modules on their own subpath |
+| New or moved files under `components/` | Component architecture — `frontend-component-structure` skill: correct atomic level, companion files present, no barrel `index.ts`, naming, reuse before building |
+| New or changed function signatures and component props | API ergonomics — `frontend-no-boolean-params` skill: mode/variant options are string-literal unions, not booleans |
+| Any code handling optional values (`??`, `\|\|`, ternary defaults) | Fallbacks — `code-no-defensive-fallbacks` skill: one owner per fallback, no `?? ''`, no default invented to satisfy a type |
+| `*.tsx` with functions returning JSX, or `styled()` / `keyframes` calls | Render functions — `frontend-no-render-functions` skill: JSX-returning functions are components, `styled()` belongs in `styles.ts`, forward `className` in MUI slots |
 | `apps/frontend/**/*.test.tsx` | Frontend tests — test through real component tree, assert what user sees, real data |
 | `packages/api/**/*.py` | API (FastAPI) — type hints, error context, no swallowed exceptions |
 | `packages/ml/**/*.py` (incl. `alembic/`) | ML / migrations — reproducibility, no future-leakage in features, migration safety |
@@ -59,10 +65,13 @@ Always load (read in parallel):
 - `CLAUDE.md` (project rules)
 - `~/.claude/rules/engineering-principles.md`
 - All `review-*` skills, discovered by glob so new ones are never missed: `ls .claude/skills/review-*/SKILL.md`
+- All `code-*` skills (language-agnostic code standards), same glob approach: `ls .claude/skills/code-*/SKILL.md`
 
 Conditionally, glob the family and read all matches:
-- Frontend files changed → `ls .claude/skills/frontend-*/SKILL.md`, then apply each only where its subject matches the diff (MUI theming skill only if styling changed, react-query skill only if `@tanstack/react-query` in the tree, testing skill only if `*.test.ts*` changed).
+- Frontend files changed → `ls .claude/skills/frontend-*/SKILL.md`, then apply each only where its subject matches the diff (MUI theming skill only if styling changed, react-query skill only if `@tanstack/react-query` in the tree, `frontend-api-calls` only if data-fetching hooks or HTTP calls changed, `frontend-no-boolean-params` only if function signatures or component props changed, `frontend-no-render-functions` only if `*.tsx` or `styles.ts` changed, testing skill only if `*.test.ts*` changed).
 - CDK files changed (`packages/deploy/**`, `*.stack.ts`, imports of `aws-cdk-lib`) → `ls .claude/skills/cdk-*/SKILL.md`, then apply each only where relevant (IAM skill if `grant*`/policy/role changes, stateful-resources if RDS/S3/DynamoDB/EFS changed, custom-resources if `CustomResource`/`Provider`/handler Lambda changed).
+
+- Package `exports`, bundler config or `lazy()` route imports changed → read `.claude/skills/bundle-imports/SKILL.md`.
 
 For changed files, also read 1-2 existing similar files in the repo as consistency reference (naming/tagging patterns).
 
@@ -108,10 +117,15 @@ Read each `plans/*.md` referenced or recently modified; note its checklist items
 | Test disabled/skipped | `xit\(`, `it\.skip`, `describe\.skip`, `pytest\.mark\.skip`, `@unittest\.skip`, commented-out tests | HIGH if test enforces a documented invariant |
 | Type-system bypass | `as unknown as`, `: any`, `# type: ignore`, `// @ts-ignore`, `// @ts-expect-error` without justification | HIGH |
 | Error-swallowing | Python bare `except: pass`, empty JS catch blocks | MEDIUM (HIGH if error previously propagated) |
-| Null-handling masking a real error | `?.`, `??`, `\|\|` — do NOT auto-flag (normal TS). Flag only where a default hides a value that should never be missing; justify per instance | MEDIUM |
+| Null-handling masking a real error | `?.`, `??`, `\|\|` — do NOT auto-flag (normal TS). Flag per `code-no-defensive-fallbacks`: a default that hides a value that should never be missing, `?? ''`, a second default where the callee already handles the empty case, or a coalesce added only to satisfy a type | MEDIUM (HIGH for `?? ''`) |
 | Parallel implementation of existing capability | New symbol whose name overlaps an existing one (`grep -i` it against the repo) | HIGH if both produce final answers; else MEDIUM |
 | Reintroduced forbidden pattern | Patterns CLAUDE.md bans (e.g. banner-import hacks in CDK bundling) | MEDIUM (HIGH if explicitly banned) |
 | Hardcoded secrets/magic values | `secret`, `password`, `token`, IPs, prod-looking URLs | HIGH |
+| Inlined API URL | Endpoint path literals in hooks/components instead of the shared `urls` constants module; same URL string in more than one file; raw `fetch(` | MEDIUM (HIGH if the URL is duplicated) |
+| Per-component subpath export | New `exports` entry or bundler dev alias for a single component; barrel re-export of a side-effect module | MEDIUM |
+| Render function instead of a component | `function render[A-Z]`, `const render[A-Z]`, `get[A-Z]\w*Element`, or any local returning `JSX.Element`; `styled(` or `keyframes` outside a `styles.ts` | MEDIUM |
+| Cryptic boolean parameter | New boolean function parameter or component prop that selects a mode/variant/theme (`use*`, `is*Mode`, `large`, `*Enabled`); a call site passing a bare `true`/`false` | MEDIUM |
+| Component at the wrong atomic level, missing companions, or barrel-exported | New `components/**/*.tsx` with no sibling `.test.tsx`; a page-level component under `atoms/`/`molecules/`; a new `index.ts` that only re-exports; copy-pasted component code | MEDIUM (HIGH if the test is missing) |
 | "While I'm here" scope creep | Files unrelated to commit message purpose; reformat mixed with logic | MEDIUM |
 | Half-finished migration | New path added, old not removed; new fields added, call sites read old ones; old tests asserting opposite behavior still pass | HIGH |
 | Disabled lint/type-check rule | New `// eslint-disable`, `# noqa`, `# pragma: no cover`, tsconfig/pyright exclusions | MEDIUM |

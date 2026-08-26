@@ -1,6 +1,6 @@
 ---
-name: api-calls
-description: How to call APIs in Harbour frontend — react-query for REST, urql for GraphQL, all responses parsed by a Zod schema
+name: frontend-api-calls
+description: How to call APIs in a frontend — react-query for REST, urql for GraphQL, all responses parsed by a Zod schema
 triggers:
   - model
   - user
@@ -15,13 +15,33 @@ Two transports. Every response is parsed by a Zod schema before use.
 | REST    | `@tanstack/react-query` + `xior` | `useQuery` for GETs, `useMutation` for POST/PUT/PATCH/DELETE |
 | GraphQL | `urql`                           | `useQuery` from `urql` with a typed `graphql()` document     |
 
-Import `urls` and `xior` from `@harbour/core`. Never use `fetch`.
+Use the shared HTTP client (`xior`). Never use `fetch`.
+
+## URLs are constants
+
+Never inline the same URL string in more than one place. Define every endpoint
+once in a shared `urls` module and import it.
+
+```typescript
+// src/api/urls.ts
+export const urls = {
+  WorkItems: "/api/work-items",
+  Users: "/api/users",
+} as const;
+```
+
+```typescript
+import { urls } from "~/api/urls";
+
+await xior.get(`${urls.WorkItems}/${workItemId}`);
+```
 
 ## REST — GET (`useQuery`)
 
 ```typescript
-import { urls, xior } from "@harbour/core";
 import { useQuery } from "@tanstack/react-query";
+import { xior } from "~/api/client";
+import { urls } from "~/api/urls";
 import { workItemSchema } from "~/pages/WorkItems/types";
 
 export function useWorkItem(workItemId?: string) {
@@ -42,9 +62,9 @@ export function useWorkItem(workItemId?: string) {
 ## REST — mutations (`useMutation`)
 
 ```typescript
-import { useLocale } from "@harbour/translator";
-import { urls, useApplicationStore, xior } from "@harbour/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { xior } from "~/api/client";
+import { urls } from "~/api/urls";
 
 export function useCreateWorkItem() {
   const queryClient = useQueryClient();
@@ -60,10 +80,7 @@ export function useCreateWorkItem() {
       queryClient.invalidateQueries({ queryKey: ["workItems"] });
     },
     onError: (error) => {
-      alertApi.postError(
-        error,
-        translate("harbour.errors.workItems.createFailed"),
-      );
+      alertApi.postError(error, translate("errors.workItems.createFailed"));
     },
   });
 }
@@ -113,7 +130,7 @@ export function useFetchCopilotMetricsSummary({ startDate, endDate }) {
 ## Zod parsing — required for every response
 
 - **Never return raw response data.** Parse it through a Zod schema first (see `zod-schemas` skill).
-- **GraphQL (urql):** use `useParseSchema()` (`~/queries/useParseSchema`). It throws a localized error and reports Zod errors on invalid/empty data. This helper is GraphQL-only — don't reach for it in REST hooks.
+- **GraphQL (urql):** use `useParseSchema()`. It throws a localized error and reports Zod errors on invalid/empty data. This helper is GraphQL-only — don't reach for it in REST hooks.
 
   ```typescript
   const parseSchema = useParseSchema();
@@ -121,17 +138,19 @@ export function useFetchCopilotMetricsSummary({ startDate, endDate }) {
   ```
 
 - **REST (react-query):** parse `response.data` directly with `mySchema.parse(data)`, or `safeParse` when you need to handle the failure inline.
-- **Zod error logging is generic** via `useReportZodError` from `@harbour/core` — parse failures are reported centrally, so don't build bespoke logging per hook.
+- **Zod error logging is generic** via a shared `useReportZodError` hook — parse failures are reported centrally, so don't build bespoke logging per hook.
 
 ## Where these live
 
-- REST hooks: `apps/frontend/src/hooks/<feature>/`
-- GraphQL queries: `apps/ithealth/src/queries/`
+- REST hooks: `src/hooks/<feature>/`
+- GraphQL queries: `src/queries/`
+- URL constants: `src/api/urls.ts`
 
 ## Checklist
 
 - [ ] GETs use `useQuery`; writes use `useMutation` (REST) or `urql` for GraphQL
-- [ ] `urls` and `xior` imported from `@harbour/core`, no `fetch`
+- [ ] Every endpoint is a constant in the shared `urls` module, never an inline string
+- [ ] HTTP goes through the shared `xior` client, no `fetch`
 - [ ] Response parsed by a Zod schema (REST: `schema.parse`; GraphQL: `useParseSchema`)
 - [ ] Query keys hierarchical; related queries invalidated on mutation success
 - [ ] Errors surfaced via `alertApi.postError(error, translate(...))`
