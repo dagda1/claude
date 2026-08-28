@@ -69,6 +69,7 @@ Always load (read in parallel):
 
 Conditionally, glob the family and read all matches:
 - Frontend files changed → `ls .claude/skills/frontend-*/SKILL.md`, then apply each only where its subject matches the diff (MUI theming skill only if styling changed, react-query skill only if `@tanstack/react-query` in the tree, `frontend-api-calls` only if data-fetching hooks or HTTP calls changed, `frontend-no-boolean-params` only if function signatures or component props changed, `frontend-no-render-functions` only if `*.tsx` or `styles.ts` changed, `frontend-bundle-imports` only if package `exports`, bundler config or `lazy()` route imports changed, testing skill only if `*.test.ts*` changed).
+- `useEffect` added or changed → read `.claude/skills/no-unnecessary-effects/SKILL.md` (no family prefix, so no glob finds it).
 - CDK files changed (`packages/deploy/**`, `*.stack.ts`, imports of `aws-cdk-lib`) → `ls .claude/skills/cdk-*/SKILL.md`, then apply each only where relevant (IAM skill if `grant*`/policy/role changes, stateful-resources if RDS/S3/DynamoDB/EFS changed, custom-resources if `CustomResource`/`Provider`/handler Lambda changed).
 
 For changed files, also read 1-2 existing similar files in the repo as consistency reference (naming/tagging patterns).

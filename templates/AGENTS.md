@@ -33,6 +33,7 @@ Only list commands verified in this repo. If a command needs env vars, say which
 - No boolean flags for options that select a mode or variant — use a named string-literal union. See the `frontend-no-boolean-params` skill.
 - No defensive fallbacks (`?? ''`, `|| 'Unknown'`) — one owner decides the fallback and it lives at the render boundary. See the `code-no-defensive-fallbacks` skill.
 - Anything returning JSX is a component, not a `renderX()` helper; `styled()` and `keyframes` live in `styles.ts`. See the `frontend-no-render-functions` skill.
+- `useEffect` is for synchronising with something outside React — not click handling, derived values, or state the effect sets itself. See the `no-unnecessary-effects` skill.
 - Shared skills in `.claude/skills/` cover general conventions; list only project-specific rules here.
 
 ## Do not
