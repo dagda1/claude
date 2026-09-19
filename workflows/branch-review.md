@@ -17,7 +17,7 @@ allowed-tools:
 Review a branch by analyzing its changed files against project standards and providing actionable recommendations.
 
 - Branch to review: `$1` (defaults to the current branch if empty)
-- Base branch to compare against: `$2` (defaults to `dev` if empty)
+- Base branch to compare against: `$2` (defaults to the remote's default branch if empty)
 
 ## Steps
 
@@ -44,12 +44,23 @@ Review a branch by analyzing its changed files against project standards and pro
 
 2. **Load project standards**
 
+   Read `AGENTS.md`. Then select which skills to load using
+   `.claude/skills/skills-map.txt` — a file of `glob : skill-names` lines mapping file
+   patterns to the skills that apply to them. `skills-for-files.sh` (same directory)
+   reads that map for you: pipe it the changed files and it prints the skill names.
+   Never load the whole skill set:
+
    ```bash
-   ls .claude/skills/*/SKILL.md
+   SKILLS=$(echo "$CHANGED_FILES" | .claude/skills/skills-for-files.sh)
+   echo "$SKILLS" | sed 's|^|.claude/skills/|;s|$|/SKILL.md|'
    ```
 
-   Read `AGENTS.md` and every skill the command listed. The set below is what
-   `.claude/skills/` currently ships. (code-error-handling, code-no-defensive-fallbacks, code-style-defaults, code-test-colocation, code-trust-the-types, frontend-api-calls, frontend-bundle-imports, frontend-component-structure, frontend-mui-theming, frontend-no-boolean-params, frontend-no-render-functions, frontend-prefer-router-links, frontend-react-query, frontend-react-typescript, frontend-routing, frontend-suspense, frontend-testing, frontend-zod-validation, no-tautological-tests, no-unnecessary-effects, review-commit-hygiene, review-pr-size, review-report-format, review-secret-scanning) to understand conventions, file organization, testing requirements, style guidelines, and architecture principles.
+   Read only the SKILL.md files that command prints, plus every `review-*` skill
+   (`ls .claude/skills/review-*/SKILL.md`). When splitting step 3 across subagents,
+   run the script per package's file list and give each subagent only its own skills.
+
+   Fallback: if `skills-for-files.sh` is missing, `ls .claude/skills/*/SKILL.md` and
+   read everything, as before.
 
 3. **Analyze each changed file** in `$CHANGED_FILES`:
 
@@ -59,6 +70,8 @@ Review a branch by analyzing its changed files against project standards and pro
 
    - Read the current version on the branch
    - Read the diff: `git diff $MERGE_BASE $TARGET -- $file`
+   - Review a file and its colocated test (`foo.ts` + `foo.test.ts`) as one unit — a
+     finding in one is usually explained by the other
    - Apply standards: code patterns, file structure, testing coverage, documentation
    - Identify violations, patterns, opportunities, risks
 

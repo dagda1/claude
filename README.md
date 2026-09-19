@@ -121,7 +121,7 @@ Workflows can tell Claude to load specific skills before doing work. Example fro
 ```markdown
 Always load (read in parallel):
 - `.claude/skills/review-pr-size/SKILL.md`
-- `.claude/skills/review-commit-hygiene/SKILL.md`
+- `.claude/skills/review-report-format/SKILL.md`
 
 Conditionally load based on what changed:
 - Frontend files → `.claude/skills/frontend-react-typescript/SKILL.md` etc.

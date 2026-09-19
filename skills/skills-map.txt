@@ -1,0 +1,23 @@
+# skills-map.txt — file pattern -> skills to load for that file.
+# Format: <glob>[|<glob>...] : skill skill skill
+# First matching non-+ line wins. Lines starting with + are additive: they
+# apply on top of the winning line whenever their pattern matches.
+# review-* skills are not here — the review workflow always loads those.
+# assistant-* are behaviour skills, not file-scoped.
+
+# Tests (most specific first)
+*.test.ts|*.test.tsx|*.spec.ts|*.spec.tsx : no-tautological-tests frontend-testing code-test-colocation
+
+# CDK / deploy — terminal, no frontend additives apply meaningfully here
+*deploy/*|*.stack.ts|*cdk.out*|*/cdk/*    : cdk-construct-conventions cdk-custom-resources cdk-iam-least-privilege cdk-stateful-resources
+
+# React components
+*.tsx                                     : frontend-react-typescript frontend-component-structure frontend-mui-theming frontend-no-boolean-params frontend-prefer-router-links frontend-routing frontend-suspense code-test-colocation
+
+# Plain TS
+*.ts                                      : code-error-handling code-style-defaults code-trust-the-types code-test-colocation
+
+# Additive, tightly scoped
++*/api/*|*Query.ts|*Query.tsx|*queries/*  : frontend-api-calls frontend-react-query
++*[Ss]chema*|*validation*|*[Zz]od*           : frontend-zod-validation
++*theme*|*/styles/*                       : frontend-mui-theming
