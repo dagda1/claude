@@ -1,30 +1,33 @@
 #!/usr/bin/env bash
-# Install this repo's skills and workflows into a target project.
+# Install this repo's skills, agents, hooks and permissions into a project for Devin CLI.
 # Usage: ./install.sh /path/to/project
 set -euo pipefail
 
-CLAUDE_REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT="${1:?usage: ./install.sh /path/to/project}"
 PROJECT="$(cd "$PROJECT" && pwd)"
 
-mkdir -p "$PROJECT/.claude/commands" "$PROJECT/.devin/workflows"
+mkdir -p "$PROJECT/.devin" "$PROJECT/.claude/commands"
 
-ln -sfn "$CLAUDE_REPO/skills" "$PROJECT/.claude/skills"
-ln -sfn "$CLAUDE_REPO/agents" "$PROJECT/.claude/agents"
-ln -sfn "$CLAUDE_REPO/scripts" "$PROJECT/.claude/scripts"
+# Skills are slash commands in Devin: .devin/skills/<name>/SKILL.md runs as /<name>.
+ln -sfn "$REPO/skills" "$PROJECT/.devin/skills"
+ln -sfn "$REPO/agents" "$PROJECT/.devin/agents"
 
-# Shared permissions: reads allowed, rm asks, aws denied.
-# Per-project/machine extras go in .claude/settings.local.json (unversioned).
-if [ -f "$PROJECT/.claude/settings.json" ] && [ ! -L "$PROJECT/.claude/settings.json" ]; then
-  echo "NOTE: $PROJECT/.claude/settings.json exists as a regular file — merge it into settings.local.json to adopt the shared one."
+# Stop hook for /build: blocks finishing while a spec check fails.
+ln -sfn "$REPO/devin/hooks.v1.json" "$PROJECT/.devin/hooks.v1.json"
+
+# Shared permissions: what /build needs runs without prompts; rm, push, reset, rebase ask;
+# aws, dev servers and watch mode are denied. Per-project extras (for example
+# Exec(pnpm --filter @app/web test)) go in .devin/config.local.json, which is not committed.
+if [ -f "$PROJECT/.devin/config.json" ] && [ ! -L "$PROJECT/.devin/config.json" ]; then
+  echo "NOTE: $PROJECT/.devin/config.json exists as a regular file — merge $REPO/devin/config.json into it."
 else
-  ln -sfn "$CLAUDE_REPO/.claude/settings.json" "$PROJECT/.claude/settings.json"
+  ln -sfn "$REPO/devin/config.json" "$PROJECT/.devin/config.json"
 fi
 
-# AGENTS.md is the canonical per-project context file; CLAUDE.md links to it so
-# Claude Code and AGENTS.md-readers (Devin, Codex, Cursor) share one source of truth.
+# AGENTS.md is the canonical per-project context file; CLAUDE.md links to it.
 if [ ! -e "$PROJECT/AGENTS.md" ]; then
-  cp "$CLAUDE_REPO/templates/AGENTS.md" "$PROJECT/AGENTS.md"
+  cp "$REPO/templates/AGENTS.md" "$PROJECT/AGENTS.md"
   echo "Created $PROJECT/AGENTS.md from template — edit it for this project."
 fi
 if [ ! -e "$PROJECT/CLAUDE.md" ]; then
@@ -33,17 +36,12 @@ elif [ ! -L "$PROJECT/CLAUDE.md" ]; then
   echo "NOTE: $PROJECT/CLAUDE.md exists as a regular file — merge it into AGENTS.md and replace with: ln -sf AGENTS.md CLAUDE.md"
 fi
 
-for wf in "$CLAUDE_REPO"/workflows/*.md; do
-  name="$(basename "$wf")"
-  ln -sfn "$wf" "$PROJECT/.claude/commands/$name"
-  ln -sfn "$wf" "$PROJECT/.devin/workflows/$name"
-  chars=$(wc -c < "$wf")
-  if [ "$chars" -gt 12000 ]; then
-    echo "WARNING: $name is $chars chars — Cascade workflows are capped at 12000; trim it or it will be rejected in Devin."
-  fi
+# The remaining single-file workflows: Devin imports .claude/commands/*.md as skills.
+for wf in "$REPO"/workflows/*.md; do
+  ln -sfn "$wf" "$PROJECT/.claude/commands/$(basename "$wf")"
 done
 
-echo "Installed into $PROJECT/.claude and $PROJECT/.devin:"
-ls -la "$PROJECT/.claude/skills" "$PROJECT/.claude/agents" "$PROJECT/.claude/scripts" "$PROJECT/.claude/commands" "$PROJECT/.devin/workflows"
+echo "Installed into $PROJECT/.devin:"
+ls -la "$PROJECT/.devin" "$PROJECT/.claude/commands"
 echo
-echo "Restart any running Claude Code / Devin session in $PROJECT to pick up the commands."
+echo "Restart any running Devin session in $PROJECT to pick up the skills."

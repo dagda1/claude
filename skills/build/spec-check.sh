@@ -5,7 +5,7 @@
 # Usage:
 #   spec-check.sh <spec.md>          run every check; exit 1 if a check fails or an item is open
 #   spec-check.sh --start <spec.md>  mark a build active (spec must be approved)
-#   spec-check.sh --hook             Stop hook: exit 2 (keep working) while the active build is not done
+#   spec-check.sh --hook             Stop hook: prints {"decision": "block"} while the active build is not done
 #   spec-check.sh --finish           end the build; refuses while it is not done
 #
 # Spec item format (see the spec skill):
@@ -17,7 +17,8 @@
 # The active build is recorded in .git/harness-build, so it is never committed.
 set -uo pipefail
 
-[[ "${1:-}" == "--hook" && -n "${CLAUDE_PROJECT_DIR:-}" ]] && cd "$CLAUDE_PROJECT_DIR"
+PROJECT_DIR="${DEVIN_PROJECT_DIR:-${CLAUDE_PROJECT_DIR:-}}"
+[[ "${1:-}" == "--hook" && -n "$PROJECT_DIR" ]] && cd "$PROJECT_DIR"
 ROOT="$(git rev-parse --show-toplevel)"
 MARKER="$(git rev-parse --absolute-git-dir)/harness-build"
 LOG="$(mktemp)"
@@ -89,11 +90,9 @@ case "${1:-}" in
     [[ -f "$MARKER" ]] || exit 0
     spec="$(cat "$MARKER")"
     if ! out="$(check_spec "$spec")"; then
-      {
-        echo "The build is not done. Keep working until every check passes:"
-        echo "$out"
-      } >&2
-      exit 2
+      reason="$(printf 'The build is not done. Keep working until every check passes:\n%s' "$out" |
+        awk '{ gsub(/\\/, "\\\\"); gsub(/"/, "\\\""); gsub(/\t/, " "); printf "%s%s", (NR > 1 ? "\\n" : ""), $0 }')"
+      printf '{"decision": "block", "reason": "%s"}\n' "$reason"
     fi
     ;;
   --finish)

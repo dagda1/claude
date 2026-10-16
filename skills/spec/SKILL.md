@@ -1,13 +1,14 @@
 ---
 name: spec
-description: Agree a spec for a piece of work and write its failing acceptance tests, ready for /build. This is the only conversation before the build. Use for /spec.
-disable-model-invocation: true
+description: Agree a spec for a piece of work and write its failing acceptance tests, ready for /build. This is the only conversation before the build.
 argument-hint: "[task-name]"
+triggers:
+  - user
 ---
 
 # Spec
 
-Task name: `$ARGUMENTS`. The task name is also the branch name and the folder name. If it is empty, ask for it.
+The task name is the argument given after `/spec`. It is also the branch name and the folder name. If there is no argument, ask for it.
 
 Everything for the task lives in `plans/<task>/`. This skill writes `spec.md` and the acceptance tests. `/build` does the rest in a new session, with no conversation, so the spec must hold everything the build needs.
 
@@ -25,13 +26,13 @@ Everything for the task lives in `plans/<task>/`. This skill writes `spec.md` an
 
 4. **Write the acceptance tests.** One test per item, at the agreed seam. This is the outer loop that defines done; the red → green loop for each item happens in `/build`. Before you write a test, read the test skills:
    - `tdd` with its `tests.md` and `mocking.md`,
-   - the skills `.claude/skills/skills-for-files.sh <test files>` names for the test files (for example `no-tautological-tests`, `frontend-testing`, `code-test-colocation`).
+   - the skills `.devin/skills/skills-for-files.sh <test files>` names for the test files (for example `no-tautological-tests`, `frontend-testing`, `code-test-colocation`).
 
    Expected values come from the spec, never from the code.
 
-5. **Review the tests.** Give the test files and the same test skills to the `reviewer` agent, with the diff from the branch's merge base. It reviews against the skills only — it did not write the tests. Write its findings to `plans/<task>/test-review.md` and act on each one with a `Result:` line (Fixed with the commit id, Skipped with a reason, or Invalid with why), as in `.claude/commands/branch-review.md`. Repeat the review on the fixes until it reports no Required findings, at most three rounds.
+5. **Review the tests.** Use the `reviewer` subagent: give it the test files, the same test skills, and the diff from the branch's merge base. It reviews against the skills only — it did not write the tests. Write its findings to `plans/<task>/test-review.md` and act on each one with a `Result:` line (Fixed with the commit id, Skipped with a reason, or Invalid with why), as in the `branch-review` skill. Repeat the review on the fixes until it reports no Required findings, at most three rounds.
 
-6. **Prove they fail.** Run `.claude/scripts/spec-check.sh plans/<task>/spec.md`. Every item must report `FAIL` for the right reason (the behaviour is missing, not a typo or a missing import). A check that passes now proves nothing — fix it.
+6. **Prove they fail.** Run `.devin/skills/build/spec-check.sh plans/<task>/spec.md`. Every item must report `FAIL` for the right reason (the behaviour is missing, not a typo or a missing import). A check that passes now proves nothing — fix it.
 
 7. **Commit** the spec, the tests and `test-review.md`: `spec(<task>): <goal>`.
 

@@ -1,7 +1,7 @@
 ---
 name: branch-review
 description: Review any branch — check diff, analyze code against standards, provide recommendations
-argument-hint: "[branch] [base]"
+argument-hint: "[branch] [base] [since]"
 triggers:
   - user
 allowed-tools:
@@ -53,21 +53,21 @@ Review a branch by analyzing its changed files against project standards and pro
 2. **Load project standards**
 
    Read `AGENTS.md`. Then select which skills to load using
-   `.claude/skills/skills-map.txt` — a file of `glob : skill-names` lines mapping file
+   `.devin/skills/skills-map.txt` — a file of `glob : skill-names` lines mapping file
    patterns to the skills that apply to them. `skills-for-files.sh` (same directory)
    reads that map for you: pipe it the changed files and it prints the skill names.
    Never load the whole skill set:
 
    ```bash
-   SKILLS=$(echo "$CHANGED_FILES" | .claude/skills/skills-for-files.sh)
-   echo "$SKILLS" | sed 's|^|.claude/skills/|;s|$|/SKILL.md|'
+   SKILLS=$(echo "$CHANGED_FILES" | .devin/skills/skills-for-files.sh)
+   echo "$SKILLS" | sed 's|^|.devin/skills/|;s|$|/SKILL.md|'
    ```
 
    Read only the SKILL.md files that command prints, plus every `review-*` skill
-   (`ls .claude/skills/review-*/SKILL.md`). When splitting step 3 across subagents,
+   (`ls .devin/skills/review-*/SKILL.md`). When splitting step 3 across subagents,
    run the script per package's file list and give each subagent only its own skills.
 
-   Fallback: if `skills-for-files.sh` is missing, `ls .claude/skills/*/SKILL.md` and
+   Fallback: if `skills-for-files.sh` is missing, `ls .devin/skills/*/SKILL.md` and
    read everything, as before.
 
 3. **Analyze each changed file** in `$CHANGED_FILES`:

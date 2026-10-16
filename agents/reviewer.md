@@ -1,7 +1,11 @@
 ---
 name: reviewer
 description: Reviews a set of changed files against the project's skills and returns findings as text. Read-only — it has no write tools. Used by branch-review for the file analysis, so findings never come from the context that wrote the code.
-tools: Bash, Read, Grep, Glob
+allowed-tools:
+  - read
+  - grep
+  - glob
+  - exec
 ---
 
 # Reviewer
