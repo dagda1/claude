@@ -17,7 +17,7 @@ allowed-tools:
 Review a branch by analyzing its changed files against project standards and providing actionable recommendations.
 
 - Branch to review: `$1` (defaults to the current branch if empty)
-- Base branch to compare against: `$2` (defaults to the remote's default branch if empty)
+- Base branch to compare against: `$2` (defaults to `dev` if empty)
 - Review only the commits after: `$3` (optional — a commit id; `/build` passes the last
   reviewed commit so a later round reviews only the fixes)
 
@@ -26,49 +26,23 @@ Review a branch by analyzing its changed files against project standards and pro
 1. **Setup and identify changes**
 
    ```bash
-   set -euo pipefail
    ORIGINAL=$(git branch --show-current)
    TARGET="${1:-$ORIGINAL}"
-   BASE="${2:-$(git symbolic-ref --short refs/remotes/origin/HEAD | sed 's|^origin/||')}"
+   BASE="${2:-dev}"
    git fetch origin $BASE
    git ls-remote --exit-code --heads origin $TARGET >/dev/null && git fetch origin $TARGET
    git checkout $TARGET
    MERGE_BASE=$(git merge-base origin/$BASE $TARGET)
    SINCE="${3:-}"
    FROM="${SINCE:-$MERGE_BASE}"
-   CHANGED_FILES=$(git diff --name-only $FROM $TARGET -- . \
-     ':(exclude)**/node_modules/**' \
-     ':(exclude)**/*.lock' ':(exclude)**/*-lock.json' ':(exclude)**/*.d.ts' \
-     ':(exclude)plans/**')
+   CHANGED_FILES=$(git diff --name-only $FROM $TARGET -- "*.ts" "*.tsx" "*.js" "*.jsx" "*.css" "*.json" | grep -v "node_modules" | grep -v "\.d\.ts$")
    ```
 
-   `BASE` comes from the remote's default branch, so this works on a `main` project and a
-   `dev` one. `FROM` is the merge base, or the `since` commit when one is given — every
-   diff below is taken from `FROM`. `CHANGED_FILES` covers every file type — backend,
-   config, markdown — not just frontend sources. `plans/` holds the spec and the review
-   itself, so it is never reviewed.
-
-   If any step after this one fails, run `git checkout $ORIGINAL` before reporting.
+   `FROM` is the merge base, or the `since` commit when one is given — every diff below
+   is taken from `FROM`.
 
 2. **Load project standards**
-
-   Read `AGENTS.md`. Then select which skills to load using
-   `.devin/skills/skills-map.txt` — a file of `glob : skill-names` lines mapping file
-   patterns to the skills that apply to them. `skills-for-files.sh` (same directory)
-   reads that map for you: pipe it the changed files and it prints the skill names.
-   Never load the whole skill set:
-
-   ```bash
-   SKILLS=$(echo "$CHANGED_FILES" | .devin/skills/skills-for-files.sh)
-   echo "$SKILLS" | sed 's|^|.devin/skills/|;s|$|/SKILL.md|'
-   ```
-
-   Read only the SKILL.md files that command prints, plus every `review-*` skill
-   (`ls .devin/skills/review-*/SKILL.md`). When splitting step 3 across subagents,
-   run the script per package's file list and give each subagent only its own skills.
-
-   Fallback: if `skills-for-files.sh` is missing, `ls .devin/skills/*/SKILL.md` and
-   read everything, as before.
+   Read `AGENTS.md` and the relevant skills in `.devin/skills/` (component-architecture, react-hooks, api-calls, zod-schemas, typescript-conventions, styling, frontend, responsive-svg, no-render-functions, no-boolean-params, no-defensive-fallbacks, prefer-table2, prefer-router-links, routes-in-config, testing, storybook, frontend-testing, no-tautological-tests, no-probe-components, no-swallowed-errors, frontend-suspense, i18n, bundle-imports) to understand conventions, file organization, testing requirements, style guidelines, and architecture principles.
 
 3. **Analyze each changed file** in `$CHANGED_FILES`:
 
@@ -87,18 +61,65 @@ Review a branch by analyzing its changed files against project standards and pro
    - Search for similar existing patterns and duplication opportunities
    - Verify consistency with existing code
    - Identify reusable components/functions
-   - If the project has jscpd, run it over the changed `.ts`/`.tsx` files
-     (`scripts/jscpd-staged.sh <files>` when that script exists, otherwise
-     `pnpm exec jscpd <files>`). jscpd output is a lead, not a finding: report a clone only
-     when it is a whole function or a repeated piece of logic worth extracting. Drop
-     fragments — matching imports, JSX scaffolding, a few shared lines inside otherwise
-     different functions.
+
+   Detect copied code with jscpd, which reads `.jscpd.json` at the repo root:
+
+   ```bash
+   node_modules/.bin/jscpd ./apps ./packages --baseline-from-ref $MERGE_BASE \
+     --absolute --reporters json --silent --no-tips
+   ```
+
+   jscpd only finds candidates. Read both halves of each clone that touches `$CHANGED_FILES`
+   and decide:
+
+   - Drop it if the halves differ in values, not just names.
+   - Drop repeated style blocks unless one is a copy of a shared style module.
+   - Keep code clones: functions, hooks, logic, column definitions, components.
+   - If it already existed at `$MERGE_BASE` (check with `git show`), it can only be Consider.
+
+   Put a `## jscpd` section straight under the verdict. List every kept clone in it, each
+   with what is repeated, both halves as `file:start-end`, and the repeated code (the
+   `fragment`) in a fenced block; do not point elsewhere for them. Then one line per reason
+   for what you dropped. The verdict line gives both counts:
+
+   ```
+   jscpd: 17 clones reported, 1 kept.
+   ```
+
+   - Drop `--absolute` and paths come back relative to the scanned roots, matching nothing
+     in `$CHANGED_FILES`. Use `$MERGE_BASE`, not `origin/$BASE`, or commits landed on the
+     base branch since the branch point count as this branch's duplication.
+   - Never quote the overall percentage; it counts the whole repo, not this branch.
+   - Anything under `minLines`/`minTokens`, or duplicated in behaviour rather than text, is
+     only findable by the read above. Report each clone once, under whichever found it.
+
+   **jscpd finding zero clones does not mean there is no duplication.** A solved problem
+   solved again, in a new file with new names, shares no tokens. Run the diff grep in
+   `rjsf-first` and state its result in the verdict line beside the jscpd count:
+
+   ```
+   jscpd: 0 clones reported. schema reads: 5, all in the two sanctioned walkers.
+   ```
+
+   An unaccounted hit is Required and the verdict is BLOCKING.
 
 5. **Generate review report**
    - Summary: `$TARGET` vs `$BASE`, assessment (COMPLIANT / NEEDS_WORK / BLOCKING)
    - Report only what you verified. A finding you cannot tie to a line the diff added or
      changed does not go in, not as a lower severity, not as "worth noting", not as a
      follow-up. A short report is the good outcome; never lengthen one to look thorough.
+   - Position check: every finding quotes the exact line it cites. Before writing the
+     report, locate each quote with `grep -nF` in the named file. If the quote is not at
+     the cited line, correct the reference; if it cannot be located at all, the finding
+     is dropped.
+   - Reflection pass: re-read each Required finding against the file one final time and
+     keep it only if you would stake the verdict on it being a real defect. Fewer, certain
+     findings beat coverage — a false alarm costs more trust than a miss.
+   - Never review git itself — commit messages, subjects, counts, branch names and history
+     shape are out of scope. Commits get squashed on merge, so a finding about them is
+     worthless. Review the code the diff changed and nothing else.
+   - Never flag a dependency for being newly published. `pnpm-workspace.yaml` sets
+     `minimumReleaseAge: 0` deliberately; there is no release-age rule in this repo.
    - The report is a verdict plus the action items. Each finding appears once, cited by file,
      line, severity and the skill it references.
    - Action items grouped: Required (blocking) / Recommended / Consider. Consider holds
@@ -125,8 +146,9 @@ Review a branch by analyzing its changed files against project standards and pro
      report is `## Round 1 — since <merge base>`. Number findings `N.k` (round, finding)
      so a finding keeps its id across rounds.
 
-   - End the chat output with the report's absolute path so the reader can open the full
-     report.
+   - End the chat output with a clickable link to the report, not a bare path — a long
+     temp path wraps over several lines and stops being clickable. In Devin use a
+     `<ref_file file="..." />` tag; in Cascade use a markdown link (`[report](file:///...)`).
 
 6. **Provide recommendations** — specific code changes with examples, links to skills, refactoring and testing suggestions.
 
