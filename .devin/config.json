@@ -40,6 +40,7 @@
       "Exec(scripts/jscpd-staged.sh)",
       "Exec(./scripts/jscpd-staged.sh)",
       "Exec(.devin/skills/build/spec-check.sh)",
+      "Exec(.devin/skills/build/metrics.sh)",
       "Exec(npm view)"
     ],
     "ask": [

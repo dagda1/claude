@@ -47,8 +47,9 @@ Run at most three rounds. Round 1 reviews the whole branch; each later round rev
 
 1. Run the full test suite, the typecheck and lint once.
 2. `.devin/skills/build/spec-check.sh --finish`.
-3. Write `plans/<task>/summary.md` in the format below and commit it with `review.md`: `docs(<task>): build summary`.
-4. Your final message is the verdict, one line of counts, and the path to `summary.md`. Nothing else.
+3. Write `plans/<task>/summary.md` in the format below.
+4. Run `.devin/skills/build/metrics.sh --record <task>`. It adds the task's results to `plans/metrics.csv`. Commit `summary.md`, `review.md` and `plans/metrics.csv`: `docs(<task>): build summary`.
+5. Your final message is the verdict, one line of counts, and the path to `summary.md`. Nothing else.
 
 ## Summary format
 
