@@ -39,7 +39,6 @@
       "Exec(pnpm exec jscpd)",
       "Exec(scripts/jscpd-staged.sh)",
       "Exec(./scripts/jscpd-staged.sh)",
-      "Exec(.devin/skills/skills-for-files.sh)",
       "Exec(.devin/skills/build/spec-check.sh)",
       "Exec(npm view)"
     ],

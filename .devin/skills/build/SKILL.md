@@ -16,7 +16,7 @@ Do not ask the user anything. Every decision you make goes into a file they read
 
 1. `git switch <task>`.
 2. `.devin/skills/build/spec-check.sh --start plans/<task>/spec.md`. It refuses a spec that is not approved — then stop and say so. From now on a Stop hook keeps you working while any check fails or any item is open.
-3. Read `AGENTS.md` / `CLAUDE.md`. Run `.devin/skills/skills-for-files.sh` on the files you expect to touch, including the test files, and read the skills it names. Read `tdd` with its `tests.md` and `mocking.md`. Every test you write follows these test skills; the review rounds check it against them.
+3. Read `AGENTS.md` and the skills listed in step 2 of the `branch-review` skill. Read `tdd` with its `tests.md` and `mocking.md`, and `testing`, `frontend-testing` and `no-tautological-tests`. Every test you write follows these test skills; the review rounds check it against them.
 
 ## Items
 

@@ -26,7 +26,7 @@ Everything for the task lives in `plans/<task>/`. This skill writes `spec.md` an
 
 4. **Write the acceptance tests.** One test per item, at the agreed seam. This is the outer loop that defines done; the red → green loop for each item happens in `/build`. Before you write a test, read the test skills:
    - `tdd` with its `tests.md` and `mocking.md`,
-   - the skills `.devin/skills/skills-for-files.sh <test files>` names for the test files (for example `no-tautological-tests`, `frontend-testing`, `code-test-colocation`).
+   - `testing`, `frontend-testing` and `no-tautological-tests` in `.devin/skills/`.
 
    Expected values come from the spec, never from the code.
 
