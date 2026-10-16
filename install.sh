@@ -11,6 +11,7 @@ mkdir -p "$PROJECT/.claude/commands" "$PROJECT/.devin/workflows"
 
 ln -sfn "$CLAUDE_REPO/skills" "$PROJECT/.claude/skills"
 ln -sfn "$CLAUDE_REPO/agents" "$PROJECT/.claude/agents"
+ln -sfn "$CLAUDE_REPO/scripts" "$PROJECT/.claude/scripts"
 
 # Shared permissions: reads allowed, rm asks, aws denied.
 # Per-project/machine extras go in .claude/settings.local.json (unversioned).
@@ -43,6 +44,6 @@ for wf in "$CLAUDE_REPO"/workflows/*.md; do
 done
 
 echo "Installed into $PROJECT/.claude and $PROJECT/.devin:"
-ls -la "$PROJECT/.claude/skills" "$PROJECT/.claude/agents" "$PROJECT/.claude/commands" "$PROJECT/.devin/workflows"
+ls -la "$PROJECT/.claude/skills" "$PROJECT/.claude/agents" "$PROJECT/.claude/scripts" "$PROJECT/.claude/commands" "$PROJECT/.devin/workflows"
 echo
 echo "Restart any running Claude Code / Devin session in $PROJECT to pick up the commands."

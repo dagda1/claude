@@ -2,6 +2,17 @@
 
 Personal repo of reusable Claude Code skills and workflows. Symlinked into projects so each project picks up the same conventions without duplicating files.
 
+## Harness: `/spec` → `/build`
+
+The way to do a piece of work. You talk to the agent once, before the build, and audit the result after it. Checks — not you — correct the agent during the build.
+
+1. **`/spec <task>`** — the agent interviews you (`grilling`), writes `plans/<task>/spec.md` (each item has one `check:` command), writes one acceptance test per item with the test skills, has the `reviewer` agent review those tests against the same skills (`test-review.md`), and proves every check fails. You approve the spec and the tests.
+2. **`/build <task>`** in a new session — no conversation. The agent makes each check pass test-first, one commit per item. A Stop hook (`scripts/spec-check.sh`) runs every check and will not let the agent finish while one fails or an item is open.
+3. **Review rounds** — `/branch-review` runs inside `/build`, analysis in the fresh-context `reviewer` agent. The agent fixes (one commit each), skips or invalidates every finding and records why in `review.md`. Later rounds review only the fix commits. At most 3 rounds; it stops early when a round has no Required findings or a fixed finding comes back.
+4. **You audit** `plans/<task>/summary.md`, then `review.md` and the commits. Revert what you disagree with. When the same bad decision comes back, add a rule (a skill) or a check.
+
+The task name is the branch name. The active build is recorded in `.git/harness-build`, never committed.
+
 ## Layout
 
 ```
@@ -90,7 +101,7 @@ Each project gets one canonical context file, `AGENTS.md` (read natively by Devi
 
 ## Permissions
 
-`.claude/settings.json` here is the shared permission set, symlinked into every project by `install.sh`: read-only commands (ls, cat, grep, rg, find, git status/diff/log/show/branch/fetch) run without prompting, `rm` always asks, `aws` is denied outright. Precedence is deny > ask > allow. Machine- or project-specific additions go in the project's `.claude/settings.local.json`, which is unversioned. If a project already has a real (non-symlink) settings.json, install.sh leaves it and tells you to merge.
+`.claude/settings.json` here is the shared permission set, symlinked into every project by `install.sh`. It allows what `/build` needs to run without prompts — reads, file edits, the test/typecheck/lint/jscpd commands, `git switch`/`checkout`/`add`/`commit` and the harness scripts. `rm`, `git push`, `git reset` and `git rebase` always ask; `aws`, dev servers, storybook and watch mode are denied. It also holds the `/build` Stop hook, which does nothing unless a build is active. Precedence is deny > ask > allow. Machine- or project-specific additions go in the project's `.claude/settings.local.json`, which is unversioned. If a project already has a real (non-symlink) settings.json, install.sh leaves it and tells you to merge.
 
 ## Add a new workflow
 

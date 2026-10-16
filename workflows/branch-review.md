@@ -18,6 +18,8 @@ Review a branch by analyzing its changed files against project standards and pro
 
 - Branch to review: `$1` (defaults to the current branch if empty)
 - Base branch to compare against: `$2` (defaults to the remote's default branch if empty)
+- Review only the commits after: `$3` (optional — a commit id; `/build` passes the last
+  reviewed commit so a later round reviews only the fixes)
 
 ## Steps
 
@@ -28,17 +30,23 @@ Review a branch by analyzing its changed files against project standards and pro
    ORIGINAL=$(git branch --show-current)
    TARGET="${1:-$ORIGINAL}"
    BASE="${2:-$(git symbolic-ref --short refs/remotes/origin/HEAD | sed 's|^origin/||')}"
-   git fetch origin $BASE $TARGET
+   git fetch origin $BASE
+   git ls-remote --exit-code --heads origin $TARGET >/dev/null && git fetch origin $TARGET
    git checkout $TARGET
    MERGE_BASE=$(git merge-base origin/$BASE $TARGET)
-   CHANGED_FILES=$(git diff --name-only $MERGE_BASE $TARGET -- . \
+   SINCE="${3:-}"
+   FROM="${SINCE:-$MERGE_BASE}"
+   CHANGED_FILES=$(git diff --name-only $FROM $TARGET -- . \
      ':(exclude)**/node_modules/**' \
-     ':(exclude)**/*.lock' ':(exclude)**/*-lock.json' ':(exclude)**/*.d.ts')
+     ':(exclude)**/*.lock' ':(exclude)**/*-lock.json' ':(exclude)**/*.d.ts' \
+     ':(exclude)plans/**')
    ```
 
    `BASE` comes from the remote's default branch, so this works on a `main` project and a
-   `dev` one. `CHANGED_FILES` covers every file type — backend, config, markdown — not just
-   frontend sources.
+   `dev` one. `FROM` is the merge base, or the `since` commit when one is given — every
+   diff below is taken from `FROM`. `CHANGED_FILES` covers every file type — backend,
+   config, markdown — not just frontend sources. `plans/` holds the spec and the review
+   itself, so it is never reviewed.
 
    If any step after this one fails, run `git checkout $ORIGINAL` before reporting.
 
@@ -69,7 +77,7 @@ Review a branch by analyzing its changed files against project standards and pro
    work through the packages sequentially in a single pass.
 
    - Read the current version on the branch
-   - Read the diff: `git diff $MERGE_BASE $TARGET -- $file`
+   - Read the diff: `git diff $FROM $TARGET -- $file`
    - Review a file and its colocated test (`foo.ts` + `foo.test.ts`) as one unit — a
      finding in one is usually explained by the other
    - Apply standards: code patterns, file structure, testing coverage, documentation
@@ -79,6 +87,12 @@ Review a branch by analyzing its changed files against project standards and pro
    - Search for similar existing patterns and duplication opportunities
    - Verify consistency with existing code
    - Identify reusable components/functions
+   - If the project has jscpd, run it over the changed `.ts`/`.tsx` files
+     (`scripts/jscpd-staged.sh <files>` when that script exists, otherwise
+     `pnpm exec jscpd <files>`). jscpd output is a lead, not a finding: report a clone only
+     when it is a whole function or a repeated piece of logic worth extracting. Drop
+     fragments — matching imports, JSX scaffolding, a few shared lines inside otherwise
+     different functions.
 
 5. **Generate review report**
    - Summary: `$TARGET` vs `$BASE`, assessment (COMPLIANT / NEEDS_WORK / BLOCKING)
@@ -90,17 +104,26 @@ Review a branch by analyzing its changed files against project standards and pro
    - Action items grouped: Required (blocking) / Recommended / Consider. Consider holds
      verified, in-scope findings the author may reasonably decline, never a weak one
      demoted to fill the section. Omit any category or group with nothing in it.
-   - Write the full report to the **system temp dir** (outside the repo working tree),
-     named after the branch with `/` replaced by `-`:
+   - Where the report goes depends on whether the branch has a task folder:
 
      ```bash
-     REPORT_FILE="${TMPDIR:-/tmp}/branch-review-$(echo "$TARGET" | tr '/' '-').md"
+     if [ -d "plans/$TARGET" ]; then
+       REPORT_FILE="plans/$TARGET/review.md"
+     else
+       REPORT_FILE="${TMPDIR:-/tmp}/branch-review-$(echo "$TARGET" | tr '/' '-').md"
+     fi
      ```
 
-     Write outside the repo, **not** to a repo folder: a repo `tmp/` is gitignored and
-     Cascade's write tool silently skips gitignored paths, while any non-ignored repo
-     folder ends up committed by accident. The system temp dir avoids both — it's writable
-     by the normal write tool in Devin and Cascade and can never be committed.
+     A task folder (`plans/<branch>/`, made by `/spec`) keeps the review in the repo with
+     the spec, so the whole task can be audited afterwards. Without one, write to the
+     system temp dir, **not** a repo folder: a repo `tmp/` is gitignored and Cascade's
+     write tool silently skips gitignored paths, while any other repo folder ends up
+     committed by accident.
+
+   - When `$3` (since) is given and the report file already exists, **append** a new
+     `## Round N — since <commit>` section; never rewrite earlier rounds. Otherwise the
+     report is `## Round 1 — since <merge base>`. Number findings `N.k` (round, finding)
+     so a finding keeps its id across rounds.
 
    - End the chat output with the report's absolute path so the reader can open the full
      report.
@@ -120,16 +143,17 @@ Review a branch by analyzing its changed files against project standards and pro
 
 ## Keeping the report current
 
-The report file is the live state of the review, not a one-off snapshot. Touch it only
-when a finding is resolved or invalidated — not after every edit, and not to record
-verification runs:
+The report is the record of the review: the reader audits it after the fact, so nothing
+in it is deleted. Touch a finding only when it is resolved — not after every edit, and not
+to record verification runs. Add one `Result:` line directly under the finding's heading:
 
-- A finding that is fixed is **deleted**, not annotated. Renumber what is left and
-  correct the count in the verdict line.
-- A finding that turns out to be wrong is deleted, and the correction is stated in the
-  chat reply.
-- Re-check the rest of the file for entries the fix made stale (verification commands
-  that now pass, "pre-existing" notes that no longer hold).
+- `Result: Fixed — <commit id>` — one commit per finding, so the fix can be reverted alone.
+- `Result: Skipped — <reason>` — a reason the reader can judge, not "out of scope".
+- `Result: Invalid — <why the finding was wrong>`.
+- `Result: Repeated — came back after <finding id> was fixed; left for the user`.
+- `Result: Open` — not acted on; the reader decides.
+
+Keep the Where-to-Comment table and Action Items in step with the results.
 
 ## Verifying a claim about backend data
 
