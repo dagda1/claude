@@ -47,7 +47,7 @@ Run at most three rounds. Round 1 reviews the whole branch; each later round rev
 2. `.devin/skills/build/spec-check.sh --finish`.
 3. Write `plans/<task>/summary.md` in the format below.
 4. Commit nothing: `--finish` has already uncommitted the build's commits, so every change is in the working tree for the user to review.
-5. Your final message is the verdict, one line of counts, and the path to `summary.md`. Nothing else.
+5. Your final message is the verdict, then the path to `summary.md` as its last line. Nothing else.
 
 ## Summary format
 
@@ -59,16 +59,6 @@ Verdict: <verdict of the last review> · Rounds: <n> · Stopped because: <no Req
 ## Needs your decision
 
 - <Every blocked item, open or repeated finding, and skipped finding — one line each, with its id in review.md.>
-
-## Items
-
-| #   | Item | Result |
-| --- | ---- | ------ |
-
-## Review rounds
-
-| Round | Since | Found | Fixed | Skipped | Invalid | Repeated |
-| ----- | ----- | ----- | ----- | ------- | ------- | -------- |
 
 ## Final checks
 

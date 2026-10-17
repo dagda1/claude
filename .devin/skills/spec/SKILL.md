@@ -13,9 +13,9 @@ Everything for the task lives in `plans/<task>/`. This skill writes `spec.md` an
 
 ## Steps
 
-1. **Ask what the task is.** Ask the user to describe the task. Search nothing and read no code before they answer. Every point their answer leaves open is a question for them. Never fill it in yourself.
+1. **Folder.** `mkdir -p plans/<task>`.
 
-2. **Folder.** `mkdir -p plans/<task>`.
+2. **Ask what the task is.** Ask the user to describe the task. Search nothing and read no code before they answer. Every point their answer leaves open is a question for them. Never fill it in yourself.
 
 3. **Interview.** First read the test skills listed in step 5. Then invoke the `grilling` skill and follow it until its frontier is empty. Find facts yourself; put only decisions to the user. The tree must settle:
    - the behaviour, item by item,
@@ -37,7 +37,7 @@ Everything for the task lives in `plans/<task>/`. This skill writes `spec.md` an
 
 7. **Prove they fail.** Run `.devin/skills/build/spec-check.sh plans/<task>/spec.md`. Every item must report `FAIL` for the right reason (the behaviour is missing, not a typo or a missing import). A check that passes now proves nothing — fix it.
 
-8. **Stop for approval.** Commit nothing, before or after approval. Give the user the spec path, the list of test files and the path to `test-review.md`, then end with the line "Reply `approved` to approve the spec, or say what to change." Nothing else. When they approve, change `Status: draft` to `Status: approved` and tell them to start a new session on this branch with `/build`. If they want changes, make them and repeat from step 6.
+8. **Stop for approval.** Commit nothing, before or after approval. Any text you write comes first. The last lines of the message are the spec path, the list of test files and the path to `test-review.md`, then the line "Reply `approved` to approve the spec, or say what to change." Nothing after it. When they approve, change `Status: draft` to `Status: approved` and tell them to start a new session on this branch with `/build`. If they want changes, make them and repeat from step 6.
 
 ## Spec format
 

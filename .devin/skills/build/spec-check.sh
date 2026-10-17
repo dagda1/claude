@@ -117,9 +117,13 @@ case "${1:-}" in
     spec="$(cat "$MARKER")"
     if ! out="$(check_spec "$spec")"; then
       blocks=$(($(cat "$BLOCKS" 2>/dev/null || echo 0) + 1))
-      ((blocks > MAX_BLOCKS)) && exit 0
+      ((blocks > MAX_BLOCKS + 1)) && exit 0
       echo "$blocks" >"$BLOCKS"
-      echo "- $(date '+%F %H:%M') stop blocked ($blocks of $MAX_BLOCKS): $(echo "$out" | grep -E 'OPEN|FAIL' | cut -d: -f1 | paste -sd, -)" >>"$(dirname "$spec")/log.md"
+      if ((blocks > MAX_BLOCKS)); then
+        echo "- $(date '+%F %H:%M') stop hook gave up after $MAX_BLOCKS blocks, build still active — run spec-check.sh --uncommit" >>"$(dirname "$spec")/log.md"
+        exit 0
+      fi
+      echo "- $(date '+%F %H:%M') stop blocked ($blocks of $MAX_BLOCKS): $(echo "$out" | grep -E 'OPEN|FAIL' | cut -d: -f1 | sort -u | paste -sd, -)" >>"$(dirname "$spec")/log.md"
       reason="$(printf 'The build is not done (stop %s of %s). Keep working until every check passes:\n%s' "$blocks" "$MAX_BLOCKS" "$out" |
         awk '{ gsub(/\\/, "\\\\"); gsub(/"/, "\\\""); gsub(/\t/, " "); printf "%s%s", (NR > 1 ? "\\n" : ""), $0 }')"
       printf '{"decision": "block", "reason": "%s"}\n' "$reason"

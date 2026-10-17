@@ -12,7 +12,7 @@ allowed-tools:
 
 You are given a package or a list of files, a `FROM` ref (the merge base, or the last reviewed commit) and a target ref.
 
-1. Read the diff for each file: `git diff $FROM $TARGET -- $file`.
+1. Read the diff for each file. Use the diff command in the task prompt; if there is none, use `git diff $FROM $TARGET -- $file`.
 2. Read the skills named in the task prompt and apply them to the lines the diff added or changed.
 3. Return your findings as text in your final message. Each finding gives file, line, severity and the skill it cites.
 

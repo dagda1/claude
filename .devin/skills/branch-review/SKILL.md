@@ -185,7 +185,7 @@ snapshot:
 review: the reader audits it after the fact, so nothing in it is deleted. Add one `Result:`
 line directly under the finding's heading:
 
-- `Result: Fixed — <commit id>` — one commit per finding, so the fix can be reverted alone.
+- `Result: Fixed — <what changed>`.
 - `Result: Skipped — <reason>` — a reason the reader can judge, not "out of scope".
 - `Result: Invalid — <why the finding was wrong>`.
 - `Result: Repeated — came back after <finding id> was fixed; left for the user`.
