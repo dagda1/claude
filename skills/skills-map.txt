@@ -12,10 +12,10 @@
 *deploy/*|*.stack.ts|*cdk.out*|*/cdk/*    : cdk-construct-conventions cdk-custom-resources cdk-iam-least-privilege cdk-stateful-resources
 
 # React components
-*.tsx                                     : frontend-react-typescript frontend-component-structure frontend-mui-theming frontend-no-boolean-params frontend-prefer-router-links frontend-routing frontend-suspense code-test-colocation
+*.tsx                                     : frontend-react-typescript frontend-component-structure frontend-mui-theming frontend-no-boolean-params frontend-prefer-router-links frontend-routing frontend-suspense code-test-colocation frontend-no-render-functions no-unnecessary-effects code-no-defensive-fallbacks frontend-bundle-imports
 
 # Plain TS
-*.ts                                      : code-error-handling code-style-defaults code-trust-the-types code-test-colocation
+*.ts                                      : code-error-handling code-style-defaults code-trust-the-types code-test-colocation code-no-defensive-fallbacks frontend-bundle-imports
 
 # Additive, tightly scoped
 +*/api/*|*Query.ts|*Query.tsx|*queries/*  : frontend-api-calls frontend-react-query

@@ -2,27 +2,23 @@
 name: pr-message
 description: Write a concise, plain-English PR message to a markdown file in the tmp folder
 argument-hint: "[base]"
-triggers:
-  - user
-allowed-tools:
-  - read
-  - grep
-  - glob
-  - exec
+disable-model-invocation: true
+allowed-tools: Bash, Read, Grep, Glob
 ---
 
 # PR Message
 
 Write a concise PR message in plain English to a markdown file in the tmp folder.
 
-- Base branch to diff against: `$1` (defaults to `dev` if empty)
+- Base branch to diff against: `$ARGUMENTS` (defaults to the remote's default branch if empty: `git symbolic-ref --short refs/remotes/origin/HEAD | sed 's|^origin/||'`)
 
 ## Steps
 
 1. Gather context (do not show this in the output):
 
    ```bash
-   BASE="${1:-dev}"
+   BASE="<the argument, or empty>"
+   BASE="${BASE:-$(git symbolic-ref --short refs/remotes/origin/HEAD | sed 's|^origin/||')}"
    git fetch origin $BASE
    MERGE_BASE=$(git merge-base origin/$BASE HEAD)
    git log --oneline $MERGE_BASE..HEAD

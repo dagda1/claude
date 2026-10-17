@@ -1,63 +1,48 @@
 # claude
 
-Personal repo of reusable Claude Code skills and workflows. Symlinked into projects so each project picks up the same conventions without duplicating files.
+Personal repo of reusable Claude Code skills. Symlinked into projects so each project picks up the same conventions without duplicating files.
 
 ## Harness: `/spec` → `/build`
 
-The way to do a piece of work. You talk to the agent once, before the build, and audit the result after it. Checks — not you — correct the agent during the build.
+The way to do a piece of work. You talk to the agent once, before the build, and review the changes after it. Checks — not you — correct the agent during the build. Nothing is committed: you review the result as uncommitted changes.
 
-1. **`/spec <task>`** — the agent interviews you (`grilling`), writes `plans/<task>/spec.md` (each item has one `check:` command), writes one acceptance test per item with the test skills, has the `reviewer` agent review those tests against the same skills (`test-review.md`), and proves every check fails. You approve the spec and the tests.
-2. **`/build <task>`** in a new session — no conversation. The agent makes each check pass test-first, one commit per item. A Stop hook (`scripts/spec-check.sh`) runs every check and will not let the agent finish while one fails or an item is open.
-3. **Review rounds** — `/branch-review` runs inside `/build`, analysis in the fresh-context `reviewer` agent. The agent fixes (one commit each), skips or invalidates every finding and records why in `review.md`. Later rounds review only the fix commits. At most 3 rounds; it stops early when a round has no Required findings or a fixed finding comes back.
-4. **You audit** `plans/<task>/summary.md`, then `review.md` and the commits. Revert what you disagree with. When the same bad decision comes back, add a rule (a skill) or a check.
+1. **`/spec`** on the task branch — the agent asks you for the task, interviews you (`grilling`), writes `plans/<task>/spec.md` (each item has one `check:` command), writes one acceptance test per item, has the `reviewer` agent review those tests (`test-review.md`), and proves every check fails. You reply `approved`.
+2. **`/build`** in a new session on the same branch — no conversation. The agent makes each check pass test-first, with a checkpoint commit per item. A Stop hook (`skills/build/spec-check.sh`) runs every check and will not let the agent stop while one fails (at most 5 times). Up to 3 review rounds run inside `/build` (`branch-review`, analysis in the `reviewer` agent), recorded in `review.md`. At the end, `spec-check.sh --finish` resets the checkpoint commits, so every change is uncommitted. If a build stops early, run `.claude/skills/build/spec-check.sh --uncommit`.
+3. **You review** the uncommitted changes and `plans/<task>/summary.md`, then commit what you keep.
+4. **`/retro`** writes `plans/<task>/retro.md`: each problem with its evidence and a proposed fix to a skill or a check. Its evidence includes `plans/<task>/log.md`, which hooks write: your messages, failed tool calls and Stop-hook blocks.
 
-The task name is the branch name. The active build is recorded in `.git/harness-build`, never committed.
+The task name is the branch name. The base branch is the remote's default branch. `plans/` is gitignored except `retro.md` (`install.sh` adds the rules). The active build is recorded in `.git/harness-build*`, never committed.
+
+The Devin copies of these files are in `.devin/`, for copying to a work machine by hand.
 
 ## Layout
 
 ```
 ~/claude/
-├── workflows/         ← symlinks into <project>/.claude/commands/
-│   └── branch-review.md
 ├── agents/            ← symlinks into <project>/.claude/agents/
 │   └── reviewer.md    ← fresh-context verifier used by /branch-review
 ├── templates/
 │   └── AGENTS.md      ← copied (not symlinked) into new projects; CLAUDE.md links to it
 ├── .claude/
-│   └── settings.json  ← shared permissions, symlinked into <project>/.claude/settings.json
+│   └── settings.json  ← shared permissions and hooks, symlinked into <project>/.claude/settings.json
+├── .devin/            ← Devin copies of the harness, copied to a work machine by hand
 └── skills/            ← symlinks into <project>/.claude/skills/
+    ├── spec/ build/ retro/ branch-review/  ← the harness, run as /spec, /build, /retro, /branch-review
     ├── assistant-*/   ← always-on behavior (communication, modification policy, output)
     ├── code-*/        ← language-agnostic conventions (errors, types, style, tests)
     ├── frontend-*/    ← React/MUI/TS conventions
     └── review-*/      ← used by /branch-review
 ```
 
-Each skill is a folder containing a `SKILL.md` with YAML frontmatter (`name`, `description`) and the rule body. Each workflow is a single markdown file with frontmatter that becomes a `/slash-command`.
+Each skill is a folder containing a `SKILL.md` with YAML frontmatter (`name`, `description`) and the rule body. A skill with `disable-model-invocation: true` runs only as a `/slash-command` (for example `/spec`, `/pr-message`).
 
-## Symlink into a new project
-
-From the project root:
+## Install into a project
 
 ```bash
-mkdir -p .claude/commands
-ln -s ~/claude/skills .claude/skills
-ln -s ~/claude/workflows/branch-review.md .claude/commands/branch-review.md
+~/claude/install.sh /path/to/project
 ```
 
-Result:
-
-```
-<project>/.claude/
-├── commands/branch-review.md → ~/claude/workflows/branch-review.md
-└── skills → ~/claude/skills
-```
-
-Verify:
-
-```bash
-ls -la .claude/skills .claude/commands/branch-review.md
-# both should show the lrwxr-xr-x permissions and `->` arrow
-```
+It links `skills/`, `agents/`, `.claude/settings.json` into the project's `.claude/`, creates `AGENTS.md` and the `CLAUDE.md` link if they are missing, and adds the `plans/` rules to `.gitignore`. A real (not linked) file or folder already in the project is left alone, with a note.
 
 Edit the source in `~/claude/`, every project picks up the change.
 
@@ -93,7 +78,7 @@ Add new prefixes as new domains appear (`backend-`, `terraform-`, etc.).
 
 ## Subagents
 
-Agents live in `agents/` as markdown with YAML frontmatter (`name`, `description`, `tools`), symlinked to `<project>/.claude/agents/` by `install.sh`. The `reviewer` agent runs `/branch-review` steps 1–9 in a fresh context via the Task tool, so the verdict never comes from the same context that wrote the code. The main context keeps the fix loop (step 10).
+Agents live in `agents/` as markdown with YAML frontmatter (`name`, `description`, `tools`), symlinked to `<project>/.claude/agents/` by `install.sh`. The `reviewer` agent does the file analysis of `/branch-review` (step 3) in a fresh context via the Agent tool, so the findings never come from the context that wrote the code. The main context keeps the fix loop.
 
 ## AGENTS.md / CLAUDE.md
 
@@ -101,46 +86,35 @@ Each project gets one canonical context file, `AGENTS.md` (read natively by Devi
 
 ## Permissions
 
-`.claude/settings.json` here is the shared permission set, symlinked into every project by `install.sh`. It allows what `/build` needs to run without prompts — reads, file edits, the test/typecheck/lint/jscpd commands, `git switch`/`checkout`/`add`/`commit` and the harness scripts. `rm`, `git push`, `git reset` and `git rebase` always ask; `aws`, dev servers, storybook and watch mode are denied. It also holds the `/build` Stop hook, which does nothing unless a build is active. Precedence is deny > ask > allow. Machine- or project-specific additions go in the project's `.claude/settings.local.json`, which is unversioned. If a project already has a real (non-symlink) settings.json, install.sh leaves it and tells you to merge.
+`.claude/settings.json` here is the shared permission set, symlinked into every project by `install.sh`. It allows what `/build` needs to run without prompts — reads, file edits, the test/typecheck/lint/jscpd commands, `git switch`/`checkout`/`add`/`commit` and the harness scripts. `rm`, `git push`, `git reset` and `git rebase` always ask; `aws`, dev servers, storybook and watch mode are denied. It also holds the hooks: the `/build` Stop hook, which does nothing unless a build is active, and the hooks that write `plans/<task>/log.md`. Precedence is deny > ask > allow. Machine- or project-specific additions go in the project's `.claude/settings.local.json`, which is unversioned. If a project already has a real (non-symlink) settings.json, install.sh leaves it and tells you to merge.
 
-## Add a new workflow
+## Add a new slash command
 
-```bash
-$EDITOR ~/claude/workflows/<name>.md
-```
-
-Then in each project that should have it:
-
-```bash
-ln -s ~/claude/workflows/<name>.md .claude/commands/<name>.md
-```
-
-Frontmatter shape:
+Make it a skill, with `disable-model-invocation: true` so it runs only when you type it:
 
 ```markdown
 ---
-description: One-line description shown in `/` command list.
-argument-hint: [arg1] [arg2]
-allowed-tools: Bash, Read, Grep, Glob
+name: <name>
+description: One-line description shown in the `/` command list.
+argument-hint: "[arg1] [arg2]"
+disable-model-invocation: true
 ---
 ```
 
-## Reference from a workflow
+The arguments are in `$ARGUMENTS`.
 
-Workflows can tell Claude to load specific skills before doing work. Example from `branch-review.md`:
+## Reference from a skill
+
+A slash-command skill can tell Claude to load specific skills before doing work. Example from `skills/branch-review/SKILL.md`:
 
 ```markdown
-Always load (read in parallel):
-- `.claude/skills/review-pr-size/SKILL.md`
-- `.claude/skills/review-report-format/SKILL.md`
-
-Conditionally load based on what changed:
-- Frontend files → `.claude/skills/frontend-react-typescript/SKILL.md` etc.
+Read `AGENTS.md`, the `review-*` skills in `.claude/skills/`, and the skills that
+`.claude/skills/skills-for-files.sh` names for the changed files.
 ```
 
-This keeps the workflow body tight and the skills independently reusable.
+This keeps the command body tight and the skills independently reusable.
 
 ## Caveats
 
-- Symlinks aren't reliably watched for live changes by Claude Code. Restart the session after editing a skill or workflow to be safe.
-- Skills auto-load when their `description` matches what Claude is doing. To force-load one, reference it explicitly from a workflow or in the user prompt (e.g. "apply the `code-trust-the-types` skill").
+- Symlinks aren't reliably watched for live changes by Claude Code. Restart the session after editing a skill to be safe.
+- Skills auto-load when their `description` matches what Claude is doing. To force-load one, reference it explicitly from another skill or in the user prompt (e.g. "apply the `code-trust-the-types` skill").

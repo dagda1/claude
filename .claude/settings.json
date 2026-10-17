@@ -22,11 +22,37 @@
       "Bash(git merge-base:*)",
       "Bash(git remote get-url:*)",
       "Bash(pnpm --version)",
-      "Bash(npm view:*)"
+      "Bash(npm view:*)",
+      "Edit",
+      "Write",
+      "Bash(mkdir -p plans:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git ls-remote:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git symbolic-ref:*)",
+      "Bash(git switch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git revert:*)",
+      "Bash(pnpm test)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm exec tsc:*)",
+      "Bash(pnpm exec vitest run:*)",
+      "Bash(pnpm exec eslint:*)",
+      "Bash(pnpm --filter:*)",
+      "Bash(node_modules/.bin/jscpd:*)",
+      "Bash(.claude/skills/build/spec-check.sh:*)",
+      "Bash(.claude/skills/skills-for-files.sh:*)"
     ],
     "ask": [
       "Bash(rm:*)",
-      "Bash(rm)"
+      "Bash(rm)",
+      "Bash(git push:*)",
+      "Bash(git reset:*)",
+      "Bash(git rebase:*)"
     ],
     "deny": [
       "Bash(aws:*)",
@@ -44,7 +70,41 @@
       "Bash(vite:*)",
       "Bash(npx vite:*)",
       "Bash(pnpm test:watch:*)",
-      "Bash(vitest --watch:*)"
+      "Bash(vitest --watch:*)",
+      "Edit(**/.env*)",
+      "Write(**/.env*)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=\"$CLAUDE_PROJECT_DIR/.claude/skills/build/spec-check.sh\"; [ -x \"$f\" ] && \"$f\" --hook || true"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=\"$CLAUDE_PROJECT_DIR/.claude/skills/build/log-event.sh\"; [ -x \"$f\" ] && \"$f\" prompt || true"
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=\"$CLAUDE_PROJECT_DIR/.claude/skills/build/log-event.sh\"; [ -x \"$f\" ] && \"$f\" tool || true"
+          }
+        ]
+      }
     ]
   }
 }
