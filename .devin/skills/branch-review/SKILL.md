@@ -18,8 +18,9 @@ Review a branch by analyzing its changed files against project standards and pro
 
 - Branch to review: `$1` (defaults to the current branch if empty)
 - Base branch to compare against: `$2` (defaults to `dev` if empty)
-- Review only the commits after: `$3` (optional — a commit id; `/build` passes the last
-  reviewed commit so a later round reviews only the fixes)
+- Review only the commits after: `$3` (optional — a commit id). Only `/build` passes it:
+  the merge base in round 1, then the last reviewed commit, so a later round reviews only
+  the fixes. With `$3` the review is a **build round**; without it, a **standalone review**.
 
 ## Steps
 
@@ -125,26 +126,28 @@ Review a branch by analyzing its changed files against project standards and pro
    - Action items grouped: Required (blocking) / Recommended / Consider. Consider holds
      verified, in-scope findings the author may reasonably decline, never a weak one
      demoted to fill the section. Omit any category or group with nothing in it.
-   - Where the report goes depends on whether the branch has a task folder:
+   - Where the report goes depends on whether this is a build round:
 
      ```bash
-     if [ -d "plans/$TARGET" ]; then
+     if [ -n "$SINCE" ]; then
        REPORT_FILE="plans/$TARGET/review.md"
      else
        REPORT_FILE="${TMPDIR:-/tmp}/branch-review-$(echo "$TARGET" | tr '/' '-').md"
      fi
      ```
 
-     A task folder (`plans/<branch>/`, made by `/spec`) keeps the review in the repo with
-     the spec, so the whole task can be audited afterwards. Without one, write to the
-     system temp dir, **not** a repo folder: a repo `tmp/` is gitignored and Cascade's
+     A build round keeps the review in the repo with the spec (`plans/<branch>/`, made by
+     `/spec`), so the whole task can be audited afterwards. A standalone review writes to
+     the system temp dir, **not** a repo folder: a repo `tmp/` is gitignored and Cascade's
      write tool silently skips gitignored paths, while any other repo folder ends up
      committed by accident.
 
-   - When `$3` (since) is given and the report file already exists, **append** a new
-     `## Round N — since <commit>` section; never rewrite earlier rounds. Otherwise the
-     report is `## Round 1 — since <merge base>`. Number findings `N.k` (round, finding)
-     so a finding keeps its id across rounds.
+   - A build round keeps the report in rounds. If the report file already exists,
+     **append** a new `## Round N — since <commit>` section; never rewrite earlier rounds.
+     Otherwise the report is `## Round 1 — since <merge base>`. Each finding is a
+     `### N.k <title>` heading (round, finding) so a finding keeps its id across rounds;
+     `spec-check.sh --finish` reads these headings. A standalone review writes
+     a single report with findings numbered `1`, `2`, ….
 
    - End the chat output with a clickable link to the report, not a bare path — a long
      temp path wraps over several lines and stops being clickable. In Devin use a
@@ -165,9 +168,22 @@ Review a branch by analyzing its changed files against project standards and pro
 
 ## Keeping the report current
 
-The report is the record of the review: the reader audits it after the fact, so nothing
-in it is deleted. Touch a finding only when it is resolved — not after every edit, and not
-to record verification runs. Add one `Result:` line directly under the finding's heading:
+Touch a finding only when it is resolved — not after every edit, and not to record
+verification runs. How depends on whether this is a build round.
+
+**In a standalone review** the report file is the live state of the review, not a one-off
+snapshot:
+
+- A finding that is fixed is **deleted**, not annotated. Renumber what is left and
+  correct the count in the verdict line.
+- A finding that turns out to be wrong is deleted, and the correction is stated in the
+  chat reply.
+- Re-check the rest of the file for entries the fix made stale (verification commands
+  that now pass, "pre-existing" notes that no longer hold).
+
+**In a build round**, and in `/spec`'s `test-review.md`, the report is the record of the
+review: the reader audits it after the fact, so nothing in it is deleted. Add one `Result:`
+line directly under the finding's heading:
 
 - `Result: Fixed — <commit id>` — one commit per finding, so the fix can be reverted alone.
 - `Result: Skipped — <reason>` — a reason the reader can judge, not "out of scope".

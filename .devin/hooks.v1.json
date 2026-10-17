@@ -8,5 +8,26 @@
         }
       ]
     }
+  ],
+  "UserPromptSubmit": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "\"$DEVIN_PROJECT_DIR\"/.devin/skills/build/log-event.sh prompt"
+        }
+      ]
+    }
+  ],
+  "PostToolUse": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "\"$DEVIN_PROJECT_DIR\"/.devin/skills/build/log-event.sh tool"
+        }
+      ]
+    }
   ]
 }
+

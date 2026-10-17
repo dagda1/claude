@@ -6,7 +6,8 @@
 #   spec-check.sh <spec.md>          run every check; exit 1 if a check fails or an item is open
 #   spec-check.sh --start <spec.md>  mark a build active (spec must be approved)
 #   spec-check.sh --hook             Stop hook: prints {"decision": "block"} while the active build is not done
-#   spec-check.sh --finish           end the build; refuses while it is not done
+#   spec-check.sh --finish           end the build and uncommit its commits; refuses while it is not done
+#   spec-check.sh --uncommit         end the build and uncommit its commits, done or not
 #
 # Spec item format (see the spec skill):
 #   - [ ] 1. <behaviour>       open
@@ -14,13 +15,18 @@
 #   - [!] 1. <behaviour>       blocked — needs a `blocked:` line; left for the user
 #     - check: `<command>`
 #
-# The active build is recorded in .git/harness-build, so it is never committed.
+# The active build and its starting commit are recorded in .git/, so they are never committed.
+# Ending a build resets the branch to the starting commit with --soft: every change the
+# build made stays in the working tree, staged, for the user to review.
 set -uo pipefail
 
 PROJECT_DIR="${DEVIN_PROJECT_DIR:-${CLAUDE_PROJECT_DIR:-}}"
 [[ "${1:-}" == "--hook" && -n "$PROJECT_DIR" ]] && cd "$PROJECT_DIR"
 ROOT="$(git rev-parse --show-toplevel)"
 MARKER="$(git rev-parse --absolute-git-dir)/harness-build"
+BLOCKS="$MARKER.blocks"
+START="$MARKER.start"
+MAX_BLOCKS=5
 LOG="$(mktemp)"
 trap 'rm -f "$LOG"' EXIT
 
@@ -78,19 +84,43 @@ check_spec() {
   return $failed
 }
 
+unresolved_findings() {
+  awk '
+    /^### [0-9]+\.[0-9]+/ { if (id != "") print id; id = $2; next }
+    id != "" && NF { if ($0 !~ /^Result: /) print id; id = "" }
+    END { if (id != "") print id }
+  ' "$1"
+}
+
+end_build() {
+  git reset --soft "$(cat "$START")" || { echo "reset to $(cat "$START") failed — build left active" >&2; exit 1; }
+  rm -f "$MARKER" "$BLOCKS" "$START"
+}
+
 case "${1:-}" in
   --start)
-    spec="$(cd "$(dirname "${2:?usage: spec-check.sh --start <spec.md>}")" && pwd)/$(basename "$2")"
+    [[ -f "${2:?usage: spec-check.sh --start <spec.md>}" ]] || { echo "no spec at $2 — run /spec first" >&2; exit 1; }
+    spec="$(cd "$(dirname "$2")" && pwd)/$(basename "$2")"
     grep -q '^Status: approved' "$spec" || { echo "spec is not approved: $spec" >&2; exit 1; }
+    if [[ -f "$MARKER" && "$(cat "$MARKER")" != "$spec" ]]; then
+      echo "an unfinished build for $(cat "$MARKER") is still active — run spec-check.sh --uncommit first" >&2
+      exit 1
+    fi
+    [[ -f "$MARKER" && -f "$START" ]] || git rev-parse HEAD >"$START"
     echo "$spec" >"$MARKER"
-    echo "build active: $spec"
+    rm -f "$BLOCKS"
+    echo "build active: $spec, starting from $(cat "$START")"
     ;;
   --hook)
     cat >/dev/null
     [[ -f "$MARKER" ]] || exit 0
     spec="$(cat "$MARKER")"
     if ! out="$(check_spec "$spec")"; then
-      reason="$(printf 'The build is not done. Keep working until every check passes:\n%s' "$out" |
+      blocks=$(($(cat "$BLOCKS" 2>/dev/null || echo 0) + 1))
+      ((blocks > MAX_BLOCKS)) && exit 0
+      echo "$blocks" >"$BLOCKS"
+      echo "- $(date '+%F %H:%M') stop blocked ($blocks of $MAX_BLOCKS): $(echo "$out" | grep -E 'OPEN|FAIL' | cut -d: -f1 | paste -sd, -)" >>"$(dirname "$spec")/log.md"
+      reason="$(printf 'The build is not done (stop %s of %s). Keep working until every check passes:\n%s' "$blocks" "$MAX_BLOCKS" "$out" |
         awk '{ gsub(/\\/, "\\\\"); gsub(/"/, "\\\""); gsub(/\t/, " "); printf "%s%s", (NR > 1 ? "\\n" : ""), $0 }')"
       printf '{"decision": "block", "reason": "%s"}\n' "$reason"
     fi
@@ -99,11 +129,20 @@ case "${1:-}" in
     [[ -f "$MARKER" ]] || { echo "no active build"; exit 0; }
     spec="$(cat "$MARKER")"
     check_spec "$spec" || { echo "build not done — not finishing" >&2; exit 1; }
-    rm -f "$MARKER"
+    review="$(dirname "$spec")/review.md"
+    [[ -f "$review" ]] || { echo "no review: $review — not finishing" >&2; exit 1; }
+    unresolved="$(unresolved_findings "$review")"
+    [[ -z "$unresolved" ]] || { echo "findings without a Result: line in $review: $(echo $unresolved) — not finishing" >&2; exit 1; }
+    end_build
     echo "build finished: $spec"
     ;;
+  --uncommit)
+    [[ -f "$MARKER" ]] || { echo "no active build"; exit 0; }
+    end_build
+    echo "build ended; its changes are uncommitted in the working tree"
+    ;;
   "" | -*)
-    echo "usage: spec-check.sh <spec.md> | --start <spec.md> | --hook | --finish" >&2
+    echo "usage: spec-check.sh <spec.md> | --start <spec.md> | --hook | --finish | --uncommit" >&2
     exit 64
     ;;
   *)
