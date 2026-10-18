@@ -70,7 +70,7 @@ Arguments, in order: `$ARGUMENTS`
    If the repo has `.jscpd.json` at its root, detect copied code with jscpd:
 
    ```bash
-   node_modules/.bin/jscpd ./apps ./packages --baseline-from-ref $MERGE_BASE \
+   node_modules/.bin/jscpd . --baseline-from-ref $MERGE_BASE \
      --absolute --reporters json --silent --no-tips
    ```
 

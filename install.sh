@@ -40,6 +40,26 @@ elif [ ! -L "$PROJECT/CLAUDE.md" ]; then
   echo "NOTE: $PROJECT/CLAUDE.md exists as a regular file — merge it into AGENTS.md and replace with: ln -sf AGENTS.md CLAUDE.md"
 fi
 
+# jscpd finds copied code for /branch-review: the config, and jscpd as a dev dependency.
+if [ ! -e "$PROJECT/.jscpd.json" ]; then
+  cp "$REPO/templates/.jscpd.json" "$PROJECT/.jscpd.json"
+  echo "Created $PROJECT/.jscpd.json from template — add this project's generated folders to its ignore list."
+fi
+if [ -f "$PROJECT/package.json" ] && ! grep -q '"jscpd"' "$PROJECT/package.json"; then
+  if [ -f "$PROJECT/pnpm-lock.yaml" ] || [ -f "$PROJECT/pnpm-workspace.yaml" ]; then
+    if [ -f "$PROJECT/pnpm-workspace.yaml" ]; then
+      (cd "$PROJECT" && pnpm add -D -w jscpd)
+    else
+      (cd "$PROJECT" && pnpm add -D jscpd)
+    fi
+  else
+    (cd "$PROJECT" && npm install -D jscpd)
+  fi
+fi
+if ! grep -qxF '/jscpd-report/' "$PROJECT/.gitignore" 2>/dev/null; then
+  printf '\n# jscpd output\n/jscpd-report/\n' >>"$PROJECT/.gitignore"
+fi
+
 # Task files in plans/ are not committed, except retro.md.
 if ! grep -qxF '/plans/*/*' "$PROJECT/.gitignore" 2>/dev/null; then
   printf '\n# /spec and /build task files; only retro.md is committed\n/plans/*/*\n!/plans/*/retro.md\n' >>"$PROJECT/.gitignore"

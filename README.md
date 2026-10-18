@@ -42,7 +42,7 @@ Each skill is a folder containing a `SKILL.md` with YAML frontmatter (`name`, `d
 ~/claude/install.sh /path/to/project
 ```
 
-It links `skills/`, `agents/`, `.claude/settings.json` into the project's `.claude/`, creates `AGENTS.md` and the `CLAUDE.md` link if they are missing, and adds the `plans/` rules to `.gitignore`. A real (not linked) file or folder already in the project is left alone, with a note.
+It links `skills/`, `agents/` and `.claude/settings.json` into the project's `.claude/`, creates `AGENTS.md`, the `CLAUDE.md` link and `.jscpd.json` if they are missing, adds jscpd as a dev dependency, and adds the `plans/` and `jscpd-report/` rules to `.gitignore`. A real (not linked) file or folder already in the project is left alone, with a note.
 
 Edit the source in `~/claude/`, every project picks up the change.
 
