@@ -7,17 +7,21 @@ Interview the user relentlessly until you reach a shared understanding. Map this
 
 Work the tree in **rounds**. The **frontier** is every decision whose prerequisites are already settled: the questions you can ask _now_ without guessing at answers you haven't heard yet. Each round asks one question from the frontier: the one whose answer invalidates the most other work if it goes the other way. Wait for the user's answer before the next round.
 
-Format a round like so:
+Format a round like this example:
 
 ```
-**<question title>**
+**Empty list**
 
-<one sentence on what part of the task this is about and why it came up>. <what you would do>, is that right?
+The results page has no design for zero results. I would show "No results" and the search box, is that right?
 ```
+
+A round is the title, one or two sentences on what part of the task this is and why it is a decision, and what you would do. The why names the rule or fact that makes this a decision. Put one decision in it. Write nothing before or after the round.
+
+Write full, plain sentences. The round is short because it holds one decision, not because words are left out.
 
 The question is yes/no by default. Only when you cannot pick between two or more real options yourself, ask which one instead and list them: one line per option, `a. <a few words>`, every line but the last ending in `\` so it breaks without a blank line. Never add an option to make up a number.
 
-Start from the task, not from what you found. The question makes sense to someone who has read nothing else. No icons, no list of facts, no jargon.
+Start from the task, not from what you found. The question makes sense to someone who has read nothing else. No icons, no jargon.
 
 Each round the user answers reshapes the tree: settled decisions push the frontier outward and unblock questions that depended on them. Recompute the frontier and ask the next round.
 

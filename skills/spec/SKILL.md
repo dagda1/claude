@@ -26,6 +26,14 @@ Everything for the task lives in `plans/<task>/`. This skill writes `spec.md` an
 
 4. **Write `plans/<task>/spec.md`** in the format below. Each item has exactly one `check:` command. An item with no check is not ready — go back to the interview, do not invent one.
 
+   Put every fact you verified about the code during the interview under `## Facts`, with the file and line where you found it. Write the fact itself ("`status` in `api/types.ts:42` is `'open' | 'closed'`"), not how to find it, so `/build` does not have to find it again. Only verified facts: a guessed fact is worse than none. Say how each fact is verified, and take each one as far as is cheap:
+
+   1. `file:line`: you read it at that line.
+   2. `walked`: you followed the code path and the wrong case cannot happen.
+   3. `ran`: you ran code that proves it (a command, a script, or a test), and the output is in the spec.
+
+   A fact that an item's safety depends on must be `ran`.
+
 5. **Write the acceptance tests.** One test per item, at the agreed seam. This is the outer loop that defines done; the red → green loop for each item happens in `/build`. Before you write a test, read the test skills:
    - `tdd/SKILL.md`,
    - `frontend-testing`, `no-tautological-tests` and `code-test-colocation` in `.claude/skills/`.
@@ -36,7 +44,7 @@ Everything for the task lives in `plans/<task>/`. This skill writes `spec.md` an
 
 7. **Prove they fail.** Run `.claude/skills/build/spec-check.sh plans/<task>/spec.md`. Every item must report `FAIL` for the right reason (the behaviour is missing, not a typo or a missing import). A check that passes now proves nothing — fix it.
 
-8. **Stop for approval.** Commit nothing, before or after approval. Any text you write comes first. The last lines of the message are the spec path, the list of test files and the path to `test-review.md`, then the line "Reply `approved` to approve the spec, or say what to change." Nothing after it. When they approve, change `Status: draft` to `Status: approved` and tell them to start a new session on this branch with `/build`. If they want changes, make them and repeat from step 6.
+8. **Stop for approval.** Commit nothing, before or after approval. Any text you write comes first. Then the line "Reply `approved` to approve the spec, or say what to change." Then the links to the spec, each test file and `test-review.md`, one per line. The links are the last thing in the message. Write nothing after them. When they approve, change `Status: draft` to `Status: approved` and tell them to start a new session on this branch with `/build`. If they want changes, make them and repeat from step 6.
 
 ## Spec format
 
@@ -53,6 +61,10 @@ Branch: <task>
 ## Out of scope
 
 - <What this task does not do.>
+
+## Facts
+
+- <A fact about the code that the build needs.> — <file:line | walked | ran: command and output>
 
 ## Items
 

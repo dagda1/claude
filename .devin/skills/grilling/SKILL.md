@@ -15,7 +15,7 @@ Format a round like this example:
 The results page has no design for zero results. I would show "No results" and the search box, is that right?
 ```
 
-A round is the title, one sentence on what part of the task this is and why it came up, and what you would do. Put one decision in it. Do not explain your plan or list what you found. Write nothing before or after the round.
+A round is the title, one or two sentences on what part of the task this is and why it is a decision, and what you would do. The why names the rule or fact that makes this a decision. Put one decision in it. Write nothing before or after the round.
 
 Write full, plain sentences. The round is short because it holds one decision, not because words are left out.
 

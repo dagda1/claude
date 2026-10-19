@@ -70,7 +70,7 @@ Arguments, in order: `$ARGUMENTS`
    If the repo has `.jscpd.json` at its root, detect copied code with jscpd:
 
    ```bash
-   node_modules/.bin/jscpd . --baseline-from-ref $MERGE_BASE \
+   node_modules/.bin/jscpd ./apps ./packages --baseline-from-ref $MERGE_BASE \
      --absolute --reporters json --silent --no-tips
    ```
 
@@ -144,7 +144,9 @@ Arguments, in order: `$ARGUMENTS`
 
    - End the chat output with a clickable link to the report, not a bare path — a long
      temp path wraps over several lines and stops being clickable. Use a markdown link
-     (`[report](file:///...)`).
+     (`[report](file:///...)`). The link is the last thing in the chat output: the
+     recommendations and verdict of steps 6 and 7 go in the report and come before the link.
+     Write nothing after it.
 
 6. **Provide recommendations** — specific code changes with examples, links to skills, refactoring and testing suggestions.
 
