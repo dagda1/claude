@@ -151,7 +151,9 @@ Review a branch by analyzing its changed files against project standards and pro
 
    - End the chat output with a clickable link to the report, not a bare path — a long
      temp path wraps over several lines and stops being clickable. In Devin use a
-     `<ref_file file="..." />` tag; in Cascade use a markdown link (`[report](file:///...)`).
+     `<ref_file file="..." />` tag. The link is the last thing in the chat output: the
+     recommendations and verdict of steps 6 and 7 go in the report and come before the link.
+     Write nothing after it.
 
 6. **Provide recommendations** — specific code changes with examples, links to skills, refactoring and testing suggestions.
 

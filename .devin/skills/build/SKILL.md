@@ -47,7 +47,7 @@ Run at most three rounds. Round 1 reviews the whole branch; each later round rev
 2. `.devin/skills/build/spec-check.sh --finish`.
 3. Write `plans/<task>/summary.md` in the format below.
 4. Commit nothing: `--finish` has already uncommitted the build's commits, so every change is in the working tree for the user to review.
-5. Your final message is the verdict, then the path to `summary.md` as its last line. Nothing else.
+5. Your final message is the verdict, then the link to `summary.md`. The link is the last thing in the message. Write nothing after it.
 
 ## Summary format
 

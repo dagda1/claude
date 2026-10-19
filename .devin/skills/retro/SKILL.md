@@ -59,7 +59,7 @@ The goal is the steering loop: a mistake that reached the user becomes a rule (a
    - If the lesson adds text to a skill, say which text it removes, or why nothing can go.
    - If nothing supports a lesson, write `No lesson.` This is a valid result: a rule that the evidence does not support costs context and gives nothing.
 
-5. **Stop for approval.** Give the user the path to `retro.md`, then end with the line "Reply `yes` to make the change, or say what to change." If there is no lesson, end with "No lesson this time." instead. Nothing else. Make only the change they approve, then:
+5. **Stop for approval.** Write the line "Reply `yes` to make the change, or say what to change." (or "No lesson this time." if there is no lesson), then the link to `retro.md`. The link is the last thing in the message. Write nothing after it. Make only the change they approve, then:
 
    - For a check, run the proof command and show that the check fails on the mistake and passes on the user's fix.
    - Update the `## Rules` table in `AGENTS.md` (make it if it does not exist). It has one row per rule: the rule, and what enforces it (the check, or `nothing`). When a check makes a rule's mistake impossible, delete the rule from its skill and keep the row with the check.
