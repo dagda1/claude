@@ -27,6 +27,14 @@ Everything for the task lives in `plans/<task>/`. This skill writes `spec.md` an
 
 4. **Write `plans/<task>/spec.md`** in the format below. Each item has exactly one `check:` command. An item with no check is not ready — go back to the interview, do not invent one.
 
+   Put every fact you verified about the code during the interview under `## Facts`, with the file and line where you found it. Write the fact itself ("`status` in `api/types.ts:42` is `'open' | 'closed'`"), not how to find it, so `/build` does not have to find it again. Only verified facts: a guessed fact is worse than none. Say how each fact is verified, and take each one as far as is cheap:
+
+   1. `file:line`: you read it at that line.
+   2. `walked`: you followed the code path and the wrong case cannot happen.
+   3. `ran`: you ran code that proves it (a command, a script, or a test), and the output is in the spec.
+
+   A fact that an item's safety depends on must be `ran`.
+
 5. **Write the acceptance tests.** One test per item, at the agreed seam. This is the outer loop that defines done; the red → green loop for each item happens in `/build`. Before you write a test, read the test skills:
    - `tdd/SKILL.md`,
    - `testing`, `frontend-testing` and `no-tautological-tests` in `.devin/skills/`.
@@ -54,6 +62,10 @@ Branch: <task>
 ## Out of scope
 
 - <What this task does not do.>
+
+## Facts
+
+- <A fact about the code that the build needs.> — <file:line | walked | ran: command and output>
 
 ## Items
 
