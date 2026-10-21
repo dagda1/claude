@@ -5,7 +5,7 @@
 # Usage:
 #   spec-check.sh <spec.md>          run every check; exit 1 if a check fails or an item is open
 #   spec-check.sh --start <spec.md>  mark a build active (spec must be approved)
-#   spec-check.sh --hook             Stop hook: prints {"decision": "block"} while the active build is not done
+#   spec-check.sh --hook             Stop hook: prints {"decision": "block"} while an item is open; runs no checks
 #   spec-check.sh --finish           end the build and uncommit its commits; refuses while it is not done
 #   spec-check.sh --uncommit         end the build and uncommit its commits, done or not
 #
@@ -84,6 +84,15 @@ check_spec() {
   return $failed
 }
 
+open_items() {
+  awk '
+    function close_item() { if (state == "!" && !blocked) print "item " id " BLOCKED WITHOUT REASON" }
+    /^- \[[ xX!]\] [0-9]+\./ { close_item(); state = substr($0, 4, 1); id = substr($0, 7); sub(/\..*/, "", id); blocked = 0; if (state == " ") print "item " id " OPEN"; next }
+    id != "" && /blocked: .+/ { blocked = 1 }
+    END { close_item() }
+  ' "$1"
+}
+
 unresolved_findings() {
   awk '
     /^### [0-9]+\.[0-9]+/ { if (id != "") print id; id = $2; next }
@@ -94,6 +103,7 @@ unresolved_findings() {
 
 end_build() {
   git reset --soft "$(cat "$START")" || { echo "reset to $(cat "$START") failed — build left active" >&2; exit 1; }
+  echo "- $(date '+%F %H:%M') build ended ($1): changes uncommitted from $(cat "$START")" >>"$(dirname "$(cat "$MARKER")")/log.md"
   rm -f "$MARKER" "$BLOCKS" "$START"
 }
 
@@ -102,6 +112,8 @@ case "${1:-}" in
     [[ -f "${2:?usage: spec-check.sh --start <spec.md>}" ]] || { echo "no spec at $2 — run /spec first" >&2; exit 1; }
     spec="$(cd "$(dirname "$2")" && pwd)/$(basename "$2")"
     grep -q '^Status: approved' "$spec" || { echo "spec is not approved: $spec" >&2; exit 1; }
+    heavy="$(grep -nE 'check: `.*(pnpm (-r )?(build|test|lint)\b|turbo run)' "$spec" | grep -v -- '--filter')"
+    [[ -z "$heavy" ]] || { printf 'full-repo build/test/lint in a check; CI runs those. Use pnpm --filter <package>:\n%s\n' "$heavy" >&2; exit 1; }
     if [[ -f "$MARKER" && "$(cat "$MARKER")" != "$spec" ]]; then
       echo "an unfinished build for $(cat "$MARKER") is still active — run spec-check.sh --uncommit first" >&2
       exit 1
@@ -115,7 +127,8 @@ case "${1:-}" in
     cat >/dev/null
     [[ -f "$MARKER" ]] || exit 0
     spec="$(cat "$MARKER")"
-    if ! out="$(check_spec "$spec")"; then
+    out="$(open_items "$spec")"
+    if [[ -n "$out" ]]; then
       blocks=$(($(cat "$BLOCKS" 2>/dev/null || echo 0) + 1))
       ((blocks > MAX_BLOCKS + 1)) && exit 0
       echo "$blocks" >"$BLOCKS"
@@ -123,8 +136,8 @@ case "${1:-}" in
         echo "- $(date '+%F %H:%M') stop hook gave up after $MAX_BLOCKS blocks, build still active — run spec-check.sh --uncommit" >>"$(dirname "$spec")/log.md"
         exit 0
       fi
-      echo "- $(date '+%F %H:%M') stop blocked ($blocks of $MAX_BLOCKS): $(echo "$out" | grep -E 'OPEN|FAIL' | cut -d: -f1 | sort -u | paste -sd, -)" >>"$(dirname "$spec")/log.md"
-      reason="$(printf 'The build is not done (stop %s of %s). Keep working until every check passes:\n%s' "$blocks" "$MAX_BLOCKS" "$out" |
+      echo "- $(date '+%F %H:%M') stop blocked ($blocks of $MAX_BLOCKS): $(echo "$out" | paste -sd, -)" >>"$(dirname "$spec")/log.md"
+      reason="$(printf 'The build is not done (stop %s of %s). Keep working until every item is done:\n%s' "$blocks" "$MAX_BLOCKS" "$out" |
         awk '{ gsub(/\\/, "\\\\"); gsub(/"/, "\\\""); gsub(/\t/, " "); printf "%s%s", (NR > 1 ? "\\n" : ""), $0 }')"
       printf '{"decision": "block", "reason": "%s"}\n' "$reason"
     fi
@@ -137,12 +150,12 @@ case "${1:-}" in
     [[ -f "$review" ]] || { echo "no review: $review — not finishing" >&2; exit 1; }
     unresolved="$(unresolved_findings "$review")"
     [[ -z "$unresolved" ]] || { echo "findings without a Result: line in $review: $(echo $unresolved) — not finishing" >&2; exit 1; }
-    end_build
+    end_build finished
     echo "build finished: $spec"
     ;;
   --uncommit)
     [[ -f "$MARKER" ]] || { echo "no active build"; exit 0; }
-    end_build
+    end_build uncommitted
     echo "build ended; its changes are uncommitted in the working tree"
     ;;
   "" | -*)

@@ -30,24 +30,37 @@ The goal is the steering loop: a mistake that reached the user becomes a rule (a
 
    Then read the earlier `plans/*/retro.md` files (list them with `git ls-files 'plans/*retro.md'`) and the `## Rules` table in `AGENTS.md`. Mark a problem as **repeated** when it already appears in an earlier retro, or when it breaks a rule in the table that nothing enforces. Give the earlier file or the rule.
 
-4. **Write `plans/<task>/retro.md`** in two parts.
+4. **Write `plans/<task>/retro.md`** for the user, in plain English, in exactly this format. No ids, timestamps, tables or field labels. With no lesson, Proposed fix says `No lesson.` and there is no Code section.
 
-   **Problems**: one row per problem from step 3, with its evidence and its cause (or confounded, or repeated).
+   ~~~markdown
+   # <task> — retro
 
-   **Lesson**: at most one, and only if the problem rows support it:
+   ## What went wrong
 
+   <one line on what went well and what did not>:
+
+   - <one plain sentence per problem>
+
+   ## Proposed fix
+
+   <the one change in plain words. What it fixes, and what it leaves.>
+
+   ## Code
+
+   In `<file>`, <where>:
+
+   ```<lang>
+   <the exact code or text>
    ```
-   cue: <the type of situation it applies to, not this task's facts>
-   level: <architecture, type, lint, test or rule>
-   lesson: <one change at that level, with the exact text or code>
-   proof: <the command that shows the check fails on this task's mistake; "none" for a rule>
-   evidence: <the problem rows it rests on>
-   confidence: <high, medium or low, and why>
-   ```
 
-   - The cue must fit a different task. "Be thorough" is too general; "the date field was wrong in item 3" never fires again. Aim between: "when a component reads a value that its parent already has, pass it down instead of fetching it again".
+   <one line: it fails on this task's mistake and passes on the fix.>
+   ~~~
+
+   Choose the fix with these rules. They guide the choice and do not appear in the report:
+
+   - The fix must fit a different task. "Be thorough" is too general; "the date field was wrong in item 3" never fires again. Aim between: "when a component reads a value that its parent already has, pass it down instead of fetching it again".
    - A lesson that rests only on confounded rows is a guess: narrow it to what the evidence shows, or write no lesson.
-   - Use the highest level that works, and say in one line why each higher level does not:
+   - Use the highest level that works:
      1. **Architecture**: one owner for each piece of state, one way to do each task. Hide internals so the wrong import fails. Delete the old way, so an agent cannot copy it.
      2. **Type**: make the wrong state impossible to write.
      3. **Lint**: when the wrong code still compiles, a lint or CI check whose error names the file, type or function to use instead. If the pattern is already common, fail only when a change adds more.
@@ -61,6 +74,6 @@ The goal is the steering loop: a mistake that reached the user becomes a rule (a
 5. **Stop for approval.** Write the line "Reply `yes` to make the change, or say what to change." (or "No lesson this time." if there is no lesson), then the link to `retro.md`. The link is the last thing in the message. Write nothing after it. Make only the change they approve, then:
 
    - For a check, run the proof command and show that the check fails on the mistake and passes on the user's fix.
-   - Update the `## Rules` table in `AGENTS.md` (make it if it does not exist). It has one row per rule: the rule, and what enforces it (the check, or `nothing`). When a check makes a rule's mistake impossible, delete the rule from its skill and keep the row with the check.
+   - Edit `AGENTS.md` only when the approved change is a rule agents must read, or a check that replaces a rule already listed there. A check that enforces itself needs no entry.
 
    Commit nothing.

@@ -9,11 +9,13 @@ triggers:
 
 Task: the current branch (`git branch --show-current`). If it is `dev`, stop and say so. Spec: `plans/<task>/spec.md`.
 
+Never run the full build, test suite, typecheck or lint. This overrides `AGENTS.md`. The user runs them, so they can see the result; you recommend them at the end.
+
 Do not ask the user anything. Every decision you make goes into a file they read afterwards: the spec, `review.md` or `summary.md`. A decision that is not written down did not happen.
 
 ## Start
 
-1. `.devin/skills/build/spec-check.sh --start plans/<task>/spec.md`. It refuses a spec that is not approved — then stop and say so. From now on a Stop hook keeps you working while any check fails or any item is open. The commits you make are checkpoints only; `--finish` (or `--uncommit`, if the build is stopped) turns them back into uncommitted changes.
+1. `.devin/skills/build/spec-check.sh --start plans/<task>/spec.md`. It refuses a spec that is not approved — then stop and say so. From now on a Stop hook keeps you working while any item is open. The commits you make are checkpoints only; `--finish` turns them back into uncommitted changes. If the user stops the build, run `--uncommit` yourself; never ask the user to run `spec-check.sh`.
 2. Read `AGENTS.md` and the skills listed in step 2 of the `branch-review` skill. Read `tdd/SKILL.md`, `testing`, `frontend-testing` and `no-tautological-tests`. Every test you write follows these test skills; the review rounds check it against them.
 
 ## Items
@@ -22,7 +24,7 @@ Work the items in order, one at a time:
 
 1. Make the item's check pass with the `tdd` red → green loop: the smallest failing test, the least code to pass it, repeat.
 2. Search before you create any function or component. Reuse what exists.
-3. Run the item's check, the typecheck and the test files you touched. Do not start the next item while one is red.
+3. Run the item's check. Do not start the next item while it is red.
 4. Commit: `feat(<task>): item <N> — <behaviour>`. Then tick the item (`[x]`).
 
 Never edit an item's check or acceptance test to make it pass. If you are sure the check or test is wrong, mark the item `[!]`, add `blocked: <why>`, and continue with the next item. Blocked is for a wrong check, never for a hard one.
@@ -38,16 +40,16 @@ Run at most three rounds. Round 1 reviews the whole branch; each later round rev
    - **Skip** it: write a reason the user can judge.
    - **Invalid**: write why the finding is wrong.
    - **Repeated**: a finding that comes back after it was fixed in an earlier round. Do not fix it again; leave it for the user.
-4. Run `.devin/skills/build/spec-check.sh plans/<task>/spec.md` and the typecheck. A fix that breaks a check is reverted, and the finding is marked Skipped with the reason.
+4. Run `.devin/skills/build/spec-check.sh plans/<task>/spec.md`. A fix that breaks a check is reverted, and the finding is marked Skipped with the reason.
 5. Stop the rounds when the round had no Required findings, when a finding was Repeated, or after round 3. Otherwise start the next round from step 1.
 
 ## Finish
 
-1. Run the full test suite, the typecheck and lint once.
-2. `.devin/skills/build/spec-check.sh --finish`.
-3. Write `plans/<task>/summary.md` in the format below.
-4. Commit nothing: `--finish` has already uncommitted the build's commits, so every change is in the working tree for the user to review.
-5. Your final message is the verdict, then the link to `summary.md`. The link is the last thing in the message. Write nothing after it.
+1. `.devin/skills/build/spec-check.sh --finish`.
+2. Write `plans/<task>/summary.md` in the format below.
+3. Commit nothing: `--finish` has already uncommitted the build's commits, so every change is in the working tree for the user to review.
+4. Under `## Run these` in `summary.md`, list the commands the user should run to check the work: the build, tests, typecheck and lint, each filtered to the packages you changed (`pnpm --filter <package> ...`).
+5. Your final message is the verdict, then the commands from `## Run these`, then the link to `summary.md`. The link is the last thing in the message. Write nothing after it.
 
 ## Summary format
 
@@ -60,9 +62,9 @@ Verdict: <verdict of the last review> · Rounds: <n> · Stopped because: <no Req
 
 - <Every blocked item, open or repeated finding, and skipped finding — one line each, with its id in review.md.>
 
-## Final checks
+## Run these
 
-<Each command run in Finish step 1, with the last lines of its output.>
+- `<command>`
 ```
 
 Omit "Needs your decision" when there is nothing in it.
