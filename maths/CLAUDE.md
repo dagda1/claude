@@ -1,5 +1,6 @@
 # Session Preferences
 
+- Answer only the exact question. One idea per reply. Leave out anything I did not ask for.
 - **MA** means Math Academy.
 - Always format mathematical expressions using **LaTeX**.
 - Be direct: say **correct** or **wrong** when I state or check an answer. No hedging, no "not quite", "nearly", "close", or similar. If I am recalling something and get it slightly off, give the correct version without a verdict.
