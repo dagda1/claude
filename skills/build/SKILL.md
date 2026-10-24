@@ -48,7 +48,7 @@ Run at most three rounds. Round 1 reviews the whole branch; each later round rev
 2. `.claude/skills/build/spec-check.sh --finish`. It refuses a summary with a longer bullet.
 3. Commit nothing: `--finish` has already uncommitted the build's commits, so every change is in the working tree for the user to review.
 4. Never run the full build, test suite, typecheck or lint. The user and CI run those. Never start Storybook: it is a process the user cannot stop.
-5. Your final message is the verdict, then the link to `summary.md`. The link is the last thing in the message. Write nothing after it.
+5. Your final message is the verdict, then the link to `summary.md`. Write each link as a markdown link to the absolute path, `[name](file:///absolute/path)`; a relative link does not open in the terminal. The link is the last thing in the message. Write nothing after it.
 
 ## Summary format
 

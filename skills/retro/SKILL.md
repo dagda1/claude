@@ -69,7 +69,7 @@ The goal is the steering loop: a mistake that reached the user becomes a rule (a
    - If the lesson adds text to a skill, say which text it removes, or why nothing can go.
    - If nothing supports a lesson, write `No lesson.` This is a valid result: a rule that the evidence does not support costs context and gives nothing.
 
-4. **Stop for approval.** Write the line "Reply `yes` to make the change, or say what to change." (or "No lesson this time." if there is no lesson), then the link to `retro.md`. The link is the last thing in the message. Write nothing after it. Make only the change they approve, then:
+4. **Stop for approval.** Write the line "Reply `yes` to make the change, or say what to change." (or "No lesson this time." if there is no lesson), then the link to `retro.md`. Write each link as a markdown link to the absolute path, `[name](file:///absolute/path)`; a relative link does not open in the terminal. The link is the last thing in the message. Write nothing after it. Make only the change they approve, then:
 
    - For a check, run the proof command and show that the check fails on the mistake and passes on the user's fix.
    - Edit `AGENTS.md` only when the approved change is a rule agents must read, or a check that replaces a rule already listed there. A check that enforces itself needs no entry.

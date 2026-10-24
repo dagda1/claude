@@ -46,7 +46,7 @@ Everything for the task lives in `plans/<task>/`. This skill writes `spec.md` an
 
 7. **Prove they fail.** Run `.claude/skills/build/spec-check.sh plans/<task>/spec.md`. Every item must report `FAIL` for the right reason (the behaviour is missing, not a typo or a missing import). A check that passes now proves nothing — fix it.
 
-8. **Stop for approval.** Commit nothing, before or after approval. Any text you write comes first. Then the line "Reply `approved` to approve the spec, or say what to change." Then the links to the spec, each test file and `test-review.md`, one per line. The links are the last thing in the message. Write nothing after them. When they approve, change `Status: draft` to `Status: approved` and tell them to start a new session on this branch with `/build`. If they want changes, make them and repeat from step 6.
+8. **Stop for approval.** Commit nothing, before or after approval. Any text you write comes first. Then the line "Reply `approved` to approve the spec, or say what to change." Then the links to the spec, each test file and `test-review.md`, one per line. Write each link as a markdown link to the absolute path, `[name](file:///absolute/path)`; a relative link does not open in the terminal. The links are the last thing in the message. Write nothing after them. When they approve, change `Status: draft` to `Status: approved` and tell them to start a new session on this branch with `/build`. If they want changes, make them and repeat from step 6.
 
 ## Spec format
 
