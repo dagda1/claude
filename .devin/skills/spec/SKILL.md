@@ -25,6 +25,8 @@ Everything for the task lives in `plans/<task>/`. This skill writes `spec.md` an
 
    Ask about a seam only when the test skills leave it open.
 
+   When a bug fix changes what the user sees, ask the user whether it needs a story that shows the fixed state. A story is only for the user to look at. It is never an item, has no check and no test, and never stands in for one. If they agree, it goes under `## Stories`. Never ask how a story is tested or checked.
+
 4. **Write `plans/<task>/spec.md`** in the format below. Each item has exactly one `check:` command. An item with no check is not ready — go back to the interview, do not invent one.
 
    Put every fact you verified about the code during the interview under `## Facts`, with the file and line where you found it. Write the fact itself ("`status` in `api/types.ts:42` is `'open' | 'closed'`"), not how to find it, so `/build` does not have to find it again. Only verified facts: a guessed fact is worse than none. Say how each fact is verified, and take each one as far as is cheap:
@@ -73,7 +75,13 @@ Branch: <task>
   - check: `<command that fails now and passes when the item is done>`
   - test: `<path to the acceptance test>`
 - [ ] 2. ...
+
+## Stories
+
+- <Story file and export>: <the state it shows>.
 ```
+
+Omit `## Stories` when the user asked for no story.
 
 A check is one shell command run from the repo root, for example `pnpm --filter @app/frontend exec vitest run src/pages/Results/Results.test.tsx`. Keep it to the one test file, so it is fast.
 

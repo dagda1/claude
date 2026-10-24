@@ -17,9 +17,7 @@ The goal is the steering loop: a mistake that reached the user becomes a rule (a
    - `spec.md`, `test-review.md`, `review.md` and `summary.md`: what was agreed and what the reviews found.
    - `git status` and `git diff`: what the user has kept, changed or discarded from the build.
 
-2. **Ask the user one question:** what did they change or discard, and why? Wait for the answer.
-
-3. **List the problems.** One line each, with its evidence (a line of `log.md`, a finding id, an item number):
+2. **List the problems.** One line each, with its evidence (a line of `log.md`, a finding id, an item number):
    - a correction or complaint in the user's messages,
    - a change the user discarded or rewrote,
    - a command that failed again and again, or a Stop-hook block,
@@ -30,7 +28,7 @@ The goal is the steering loop: a mistake that reached the user becomes a rule (a
 
    Then read the earlier `plans/*/retro.md` files (list them with `git ls-files 'plans/*retro.md'`) and the `## Rules` table in `AGENTS.md`. Mark a problem as **repeated** when it already appears in an earlier retro, or when it breaks a rule in the table that nothing enforces. Give the earlier file or the rule.
 
-4. **Write `plans/<task>/retro.md`** for the user, in plain English, in exactly this format. No ids, timestamps, tables or field labels. With no lesson, Proposed fix says `No lesson.` and there is no Code section.
+3. **Write `plans/<task>/retro.md`** for the user, in plain English, in exactly this format. No ids, timestamps, tables or field labels. With no lesson, Proposed fix says `No lesson.` and there is no Code section.
 
    ~~~markdown
    # <task> — retro
@@ -71,7 +69,7 @@ The goal is the steering loop: a mistake that reached the user becomes a rule (a
    - If the lesson adds text to a skill, say which text it removes, or why nothing can go.
    - If nothing supports a lesson, write `No lesson.` This is a valid result: a rule that the evidence does not support costs context and gives nothing.
 
-5. **Stop for approval.** Write the line "Reply `yes` to make the change, or say what to change." (or "No lesson this time." if there is no lesson), then the link to `retro.md`. The link is the last thing in the message. Write nothing after it. Make only the change they approve, then:
+4. **Stop for approval.** Write the line "Reply `yes` to make the change, or say what to change." (or "No lesson this time." if there is no lesson), then the link to `retro.md`. The link is the last thing in the message. Write nothing after it. Make only the change they approve, then:
 
    - For a check, run the proof command and show that the check fails on the mistake and passes on the user's fix.
    - Edit `AGENTS.md` only when the approved change is a rule agents must read, or a check that replaces a rule already listed there. A check that enforces itself needs no entry.

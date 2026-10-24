@@ -9,8 +9,6 @@ triggers:
 
 Task: the current branch (`git branch --show-current`). If it is `dev`, stop and say so. Spec: `plans/<task>/spec.md`.
 
-Never run the full build, test suite, typecheck or lint. This overrides `AGENTS.md`. The user runs them, so they can see the result; you recommend them at the end.
-
 Do not ask the user anything. Every decision you make goes into a file they read afterwards: the spec, `review.md` or `summary.md`. A decision that is not written down did not happen.
 
 ## Start
@@ -25,7 +23,9 @@ Work the items in order, one at a time:
 1. Make the item's check pass with the `tdd` red → green loop: the smallest failing test, the least code to pass it, repeat.
 2. Search before you create any function or component. Reuse what exists.
 3. Run the item's check. Do not start the next item while it is red.
-4. Commit: `feat(<task>): item <N> — <behaviour>`. Then tick the item (`[x]`).
+4. Commit: `feat(<task>): item <N> — <behaviour>`. Stage only the files the item changed. Never stage anything under `plans/`. Then tick the item (`[x]`).
+
+After the last item, make each story under `## Stories`, following the `storybook` skill. Write no test for a story. Commit: `feat(<task>): story — <export>`.
 
 Never edit an item's check or acceptance test to make it pass. If you are sure the check or test is wrong, mark the item `[!]`, add `blocked: <why>`, and continue with the next item. Blocked is for a wrong check, never for a hard one.
 
@@ -36,7 +36,7 @@ Run at most three rounds. Round 1 reviews the whole branch; each later round rev
 1. Note `SINCE=$(git rev-parse HEAD)` for the next round.
 2. Follow the `branch-review` skill with arguments `<task> dev <since>` (`since` is `git merge-base origin/dev HEAD` in round 1). Run its file analysis (step 3) in the `reviewer` subagent even for a small diff, so the findings never come from the context that wrote the code. The report goes to `plans/<task>/review.md`.
 3. Act on every finding of the round, and record each one with a `Result:` line as that workflow describes:
-   - **Fix** it: one commit per finding, `fix(<task>): review <id> — <what>`.
+   - **Fix** it: one commit per finding, `fix(<task>): review <id> — <what>`. Never stage anything under `plans/`.
    - **Skip** it: write a reason the user can judge.
    - **Invalid**: write why the finding is wrong.
    - **Repeated**: a finding that comes back after it was fixed in an earlier round. Do not fix it again; leave it for the user.
@@ -45,11 +45,11 @@ Run at most three rounds. Round 1 reviews the whole branch; each later round rev
 
 ## Finish
 
-1. `.devin/skills/build/spec-check.sh --finish`.
-2. Write `plans/<task>/summary.md` in the format below.
+1. Write `plans/<task>/summary.md` in the format below. No bullet over 25 words.
+2. `.devin/skills/build/spec-check.sh --finish`. It refuses a summary with a longer bullet.
 3. Commit nothing: `--finish` has already uncommitted the build's commits, so every change is in the working tree for the user to review.
-4. Under `## Run these` in `summary.md`, list the commands the user should run to check the work: the build, tests, typecheck and lint, each filtered to the packages you changed (`pnpm --filter <package> ...`).
-5. Your final message is the verdict, then the commands from `## Run these`, then the link to `summary.md`. The link is the last thing in the message. Write nothing after it.
+4. Never run the full build, test suite, typecheck or lint. The user and CI run those. Never start Storybook: it is a process the user cannot stop.
+5. Your final message is the verdict, then the link to `summary.md`. The link is the last thing in the message. Write nothing after it.
 
 ## Summary format
 
@@ -62,9 +62,11 @@ Verdict: <verdict of the last review> · Rounds: <n> · Stopped because: <no Req
 
 - <Every blocked item, open or repeated finding, and skipped finding — one line each, with its id in review.md.>
 
-## Run these
+## Check in Storybook
 
-- `<command>`
+- `pnpm --filter <package> storybook`, then [<story name>](http://localhost:<port>/?path=/story/<story id>): <what it should show and what to try>.
 ```
 
-Omit "Needs your decision" when there is nothing in it.
+Take the port from the `storybook` script in the package's `package.json`. The story id is the meta `title` and the export name, each lower-cased and kebab-cased, joined by `--`.
+
+Omit "Needs your decision" when there is nothing in it. Omit "Check in Storybook" when the spec asked for no story.

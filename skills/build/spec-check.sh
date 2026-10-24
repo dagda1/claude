@@ -103,6 +103,7 @@ unresolved_findings() {
 
 end_build() {
   git reset --soft "$(cat "$START")" || { echo "reset to $(cat "$START") failed — build left active" >&2; exit 1; }
+  git reset -q -- "$(dirname "$(cat "$MARKER")")"
   echo "- $(date '+%F %H:%M') build ended ($1): changes uncommitted from $(cat "$START")" >>"$(dirname "$(cat "$MARKER")")/log.md"
   rm -f "$MARKER" "$BLOCKS" "$START"
 }
@@ -111,7 +112,7 @@ case "${1:-}" in
   --start)
     [[ -f "${2:?usage: spec-check.sh --start <spec.md>}" ]] || { echo "no spec at $2 — run /spec first" >&2; exit 1; }
     spec="$(cd "$(dirname "$2")" && pwd)/$(basename "$2")"
-    grep -q '^Status: approved' "$spec" || { echo "spec is not approved: $spec" >&2; exit 1; }
+    grep -q '^Status: approved' "$spec" || { printf 'spec is not approved: %s\nRead it, then reply "approved" in the /spec session, or change "Status: draft" to "Status: approved" yourself, and run /build again.\n' "$spec" >&2; exit 1; }
     heavy="$(grep -nE 'check: `.*(pnpm (-r )?(build|test|lint)\b|turbo run)' "$spec" | grep -v -- '--filter')"
     [[ -z "$heavy" ]] || { printf 'full-repo build/test/lint in a check; CI runs those. Use pnpm --filter <package>:\n%s\n' "$heavy" >&2; exit 1; }
     if [[ -f "$MARKER" && "$(cat "$MARKER")" != "$spec" ]]; then
@@ -150,6 +151,10 @@ case "${1:-}" in
     [[ -f "$review" ]] || { echo "no review: $review — not finishing" >&2; exit 1; }
     unresolved="$(unresolved_findings "$review")"
     [[ -z "$unresolved" ]] || { echo "findings without a Result: line in $review: $(echo $unresolved) — not finishing" >&2; exit 1; }
+    summary="$(dirname "$spec")/summary.md"
+    [[ -f "$summary" ]] || { echo "no summary: $summary — not finishing" >&2; exit 1; }
+    long="$(awk '/^- / && NF > 26 { print FILENAME ":" FNR }' "$summary")"
+    [[ -z "$long" ]] || { echo "bullets over 25 words: $long — not finishing" >&2; exit 1; }
     end_build finished
     echo "build finished: $spec"
     ;;
