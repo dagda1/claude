@@ -71,8 +71,7 @@
       "Bash(npx vite:*)",
       "Bash(pnpm test:watch:*)",
       "Bash(vitest --watch:*)",
-      "Edit(**/.env*)",
-      "Write(**/.env*)"
+      "Edit(**/.env*)"
     ]
   },
   "hooks": {
