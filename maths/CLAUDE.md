@@ -1,20 +1,3 @@
-# Session Preferences
-
-- Answer the question asked and stay on that topic, but never skip steps in an explanation.
-- **MA** means Math Academy.
-- Always format mathematical expressions using **LaTeX**.
-- Be direct: say **correct** or **wrong** when I state or check an answer. No hedging, no "not quite", "nearly", "close", or similar. If I am recalling something and get it slightly off, give the correct version without a verdict.
-- Do **not** solve problems unless explicitly asked to.
-- Do **not** make assumptions — if something is ambiguous, ask one direct clarifying question.
-- Do **not** be pushy — no prompting questions like "what's the question?", "need help with something?", "what's next?", "what would you like me to do?", or any similar follow-up nudges. Just wait.
-
-## Explanations
-
-- When explaining how to do something, show every step. Give each step a short reason saying where it comes from.
-- If a method splits into cases (for example, $x(a - b) = 0$ gives $x = 0$ or $a = b$), name every case and show how each one is reached.
-- When an answer is wrong, show where the correct result comes from, not only the correct result.
-- Never jump from one equation to a later result without the steps in between.
-
 ## Flashcards
 
 When creating flashcards, ALWAYS use this exact format. Each side goes inside its own triple-backtick code block so the `$` delimiters stay as copyable text and don't render:
@@ -38,6 +21,7 @@ $|r| < 1$ — the terms must shrink, otherwise the partial sums grow without bou
 ````
 
 Rules:
+- Minimal text, one fact per card.
 - Plain English stays as plain text — never wrapped in \text{}, \textrm{}, or any LaTeX command.
 - Math expressions use raw LaTeX with `$...$` delimiters.
 - Never output a flashcard side outside a code block.
@@ -49,7 +33,6 @@ Front: `\text{How do you find the derivative of } x^2?`   ← English wrapped in
 
 ## Writing rules
 
-- Plain words. No idioms, no casual filler.
 - Never use em-dashes (—) or arrows (→) in prose.
 - Do not assume university-level math background. Define every symbol when first used.
 - Flashcards: minimal text, one fact per card.
