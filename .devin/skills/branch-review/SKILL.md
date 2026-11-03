@@ -24,35 +24,34 @@ Review a branch by analyzing its changed files against project standards and pro
 
 ## Steps
 
-1. **Setup and identify changes**
+1. **Prepare.** Run the script. It does every step that needs no judgement:
 
    ```bash
-   ORIGINAL=$(git branch --show-current)
-   TARGET="${1:-$ORIGINAL}"
-   BASE="${2:-dev}"
-   git fetch origin $BASE
-   git ls-remote --exit-code --heads origin $TARGET >/dev/null && git fetch origin $TARGET
-   git checkout $TARGET
-   MERGE_BASE=$(git merge-base origin/$BASE $TARGET)
-   SINCE="${3:-}"
-   FROM="${SINCE:-$MERGE_BASE}"
-   CHANGED_FILES=$(git diff --name-only $FROM $TARGET -- "*.ts" "*.tsx" "*.js" "*.jsx" "*.css" "*.json" | grep -v "node_modules" | grep -v "\.d\.ts$")
+   .devin/skills/branch-review/review-prep.sh "$1" "$2" "$3"
    ```
 
-   `FROM` is the merge base, or the `since` commit when one is given — every diff below
-   is taken from `FROM`.
+   It checks out the target and prints `ORIGINAL`, `TARGET`, `BASE`, `MERGE_BASE`, `FROM`
+   and `REPORT_FILE`. Then, for each package, it prints the changed files and the skills
+   that apply to them. Last, it prints the jscpd clones that touch the changed files. Do
+   not repeat any of this work yourself.
 
-2. **Load project standards**
-   Read `AGENTS.md` and the relevant skills in `.devin/skills/` (component-architecture, react-hooks, api-calls, zod-schemas, typescript-conventions, styling, frontend, responsive-svg, no-render-functions, no-boolean-params, no-defensive-fallbacks, prefer-table2, prefer-router-links, routes-in-config, testing, storybook, frontend-testing, no-tautological-tests, no-probe-components, no-swallowed-errors, frontend-suspense, i18n, bundle-imports) to understand conventions, file organization, testing requirements, style guidelines, and architecture principles.
+   `FROM` is the merge base, or the `since` commit when one is given. Every diff below is
+   taken from `FROM`.
 
-3. **Analyze each changed file** in `$CHANGED_FILES`:
+2. **Project standards.** Do not read these yourself. The skills come from
+   `skill-globs.txt`: a skill loads only when a changed file matches its glob and, where
+   the line has a regex, when a line the diff adds matches it. Pass each package's skill
+   list to that package's `reviewer` subagent, and pass only what the script printed.
 
-   For a large diff, split this across one background subagent per package, all launched in
-   the same message, and merge their findings. Where subagents aren't available (Cascade),
-   work through the packages sequentially in a single pass.
+3. **Analyze each package** that the script printed:
 
-   - Read the current version on the branch
-   - Read the diff: `git diff $FROM $TARGET -- $file`
+   Always run this in the `reviewer` subagent, one per package, all launched in the same
+   message, even for a small diff. Give each one its files, its skills, `FROM` and
+   `TARGET`. Merge their findings. Where subagents aren't available (Cascade), work through
+   the packages sequentially in a single pass.
+
+   - Read the diff with line numbers: `.devin/skills/branch-review/numbered-diff.sh $FROM $TARGET $file`.
+     Read the whole file only when the diff context does not explain a line.
    - Review a file and its colocated test (`foo.ts` + `foo.test.ts`) as one unit — a
      finding in one is usually explained by the other
    - Apply standards: code patterns, file structure, testing coverage, documentation
@@ -63,15 +62,11 @@ Review a branch by analyzing its changed files against project standards and pro
    - Verify consistency with existing code
    - Identify reusable components/functions
 
-   Detect copied code with jscpd, which reads `.jscpd.json` at the repo root:
+   The `## jscpd` part of the script output lists the clones that touch the changed files,
+   each with both halves as `file:start-end` and the `fragment`. jscpd reads `.jscpd.json`
+   at the repo root.
 
-   ```bash
-   node_modules/.bin/jscpd ./apps ./packages --baseline-from-ref $MERGE_BASE \
-     --absolute --reporters json --silent --no-tips
-   ```
-
-   jscpd only finds candidates. Read both halves of each clone that touches `$CHANGED_FILES`
-   and decide:
+   jscpd only finds candidates. Read both halves of each clone the script printed and decide:
 
    - Drop it if the halves differ in values, not just names.
    - Drop repeated style blocks unless one is a copy of a shared style module.
@@ -87,9 +82,6 @@ Review a branch by analyzing its changed files against project standards and pro
    jscpd: 17 clones reported, 1 kept.
    ```
 
-   - Drop `--absolute` and paths come back relative to the scanned roots, matching nothing
-     in `$CHANGED_FILES`. Use `$MERGE_BASE`, not `origin/$BASE`, or commits landed on the
-     base branch since the branch point count as this branch's duplication.
    - Never quote the overall percentage; it counts the whole repo, not this branch.
    - Anything under `minLines`/`minTokens`, or duplicated in behaviour rather than text, is
      only findable by the read above. Report each clone once, under whichever found it.
@@ -110,9 +102,14 @@ Review a branch by analyzing its changed files against project standards and pro
      changed does not go in, not as a lower severity, not as "worth noting", not as a
      follow-up. A short report is the good outcome; never lengthen one to look thorough.
    - Position check: every finding quotes the exact line it cites. Before writing the
-     report, locate each quote with `grep -nF` in the named file. If the quote is not at
-     the cited line, correct the reference; if it cannot be located at all, the finding
-     is dropped.
+     report, pipe every finding to the script, one per line as
+     `<file><TAB><line><TAB><quote>`:
+
+     ```bash
+     .devin/skills/branch-review/check-quotes.sh
+     ```
+
+     `MOVED`: correct the reference to the line it gives. `MISSING`: drop the finding.
    - Reflection pass: re-read each Required finding against the file one final time and
      keep it only if you would stake the verdict on it being a real defect. Fewer, certain
      findings beat coverage — a false alarm costs more trust than a miss.
@@ -126,17 +123,7 @@ Review a branch by analyzing its changed files against project standards and pro
    - Action items grouped: Required (blocking) / Recommended / Consider. Consider holds
      verified, in-scope findings the author may reasonably decline, never a weak one
      demoted to fill the section. Omit any category or group with nothing in it.
-   - Where the report goes depends on whether this is a build round:
-
-     ```bash
-     if [ -n "$SINCE" ]; then
-       REPORT_FILE="plans/$TARGET/review.md"
-     else
-       REPORT_FILE="${TMPDIR:-/tmp}/branch-review-$(echo "$TARGET" | tr '/' '-').md"
-     fi
-     ```
-
-     A build round keeps the review in the repo with the spec (`plans/<branch>/`, made by
+   - Write the report to the `REPORT_FILE` the script printed. A build round keeps the review in the repo with the spec (`plans/<branch>/`, made by
      `/spec`), so the whole task can be audited afterwards. A standalone review writes to
      the system temp dir, **not** a repo folder: a repo `tmp/` is gitignored and Cascade's
      write tool silently skips gitignored paths, while any other repo folder ends up

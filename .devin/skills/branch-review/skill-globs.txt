@@ -1,0 +1,41 @@
+# <glob> <skill> [<regex>]
+# A changed file loads every skill whose glob matches it. `*` matches across `/`.
+# With a regex, the skill loads only when a line the diff adds to that file matches it
+# (grep -E). The regex runs to the end of the line and must not contain spaces.
+# First match does not stop the search: a file can load many skills.
+*.ts                    typescript-conventions
+*.tsx                   typescript-conventions
+*.ts                    no-boolean-params
+*.tsx                   no-boolean-params
+*.ts                    no-defensive-fallbacks   \?\?|\|\||\?\.
+*.tsx                   no-defensive-fallbacks   \?\?|\|\||\?\.
+*.ts                    no-swallowed-errors      catch|onError
+*.tsx                   no-swallowed-errors      catch|onError
+*.ts                    bundle-imports           ^\+[[:space:]]*import
+*.tsx                   bundle-imports           ^\+[[:space:]]*import
+*.tsx                   component-architecture
+*.tsx                   frontend
+*.tsx                   react-hooks              \buse[A-Z]
+*/use*.ts               react-hooks
+*.tsx                   no-render-functions      render[A-Z]
+*.tsx                   frontend-suspense        Suspense|lazy\(
+*.tsx                   i18n                     >[^<{]*[A-Za-z]|useTranslation|\bt\(
+*.tsx                   styling                  className|style=|sx=|styled
+*.css                   styling
+*.tsx                   prefer-table2            <[Tt]able
+*.tsx                   prefer-router-links      href=|navigate\(|window\.location
+*.tsx                   responsive-svg           <svg|viewBox
+*api*                   api-calls
+*.ts                    api-calls                fetch\(|useQuery|useMutation
+*.tsx                   api-calls                fetch\(|useQuery|useMutation
+*schema*                zod-schemas
+*.ts                    zod-schemas              \bz\.
+*schema*                rjsf-first
+*route*                 routes-in-config
+*.test.ts               testing
+*.test.tsx              testing
+*.test.tsx              frontend-testing
+*.test.ts               no-tautological-tests
+*.test.tsx              no-tautological-tests
+*.test.tsx              no-probe-components
+*.stories.tsx           storybook

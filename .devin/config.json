@@ -41,6 +41,12 @@
       "Exec(./scripts/jscpd-staged.sh)",
       "Exec(.devin/skills/build/spec-check.sh)",
       "Exec(.devin/skills/build/metrics.sh)",
+      "Exec(.devin/skills/branch-review/skills-for.sh)",
+      "Exec(.devin/skills/branch-review/review-prep.sh)",
+      "Exec(.devin/skills/branch-review/check-quotes.sh)",
+      "Exec(.devin/skills/branch-review/numbered-diff.sh)",
+      "Exec(.devin/skills/pr-message/pr-context.sh)",
+      "Exec(.devin/skills/retro/retro-context.sh)",
       "Exec(npm view)"
     ],
     "ask": [

@@ -1,3 +1,12 @@
+# Session Preferences
+
+- **MA** means Math Academy.
+- Always format mathematical expressions using **LaTeX**.
+- Be direct: say **correct** or **wrong** when I state or check an answer. No hedging, no "not quite", "nearly", "close", or similar. If I am recalling something and get it slightly off, give the correct version without a verdict.
+- Do **not** solve problems unless explicitly asked to.
+- Do **not** make assumptions — if something is ambiguous, ask one direct clarifying question.
+- Do **not** be pushy — no prompting questions like "what's the question?", "need help with something?", "what's next?", "what would you like me to do?", or any similar follow-up nudges. Just wait.
+
 ## Flashcards
 
 When creating flashcards, ALWAYS use this exact format. Each side goes inside its own triple-backtick code block so the `$` delimiters stay as copyable text and don't render:

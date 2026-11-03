@@ -14,7 +14,7 @@ Do not ask the user anything. Every decision you make goes into a file they read
 ## Start
 
 1. `.devin/skills/build/spec-check.sh --start plans/<task>/spec.md`. It refuses a spec that is not approved — then stop and say so. From now on a Stop hook keeps you working while any item is open. The commits you make are checkpoints only; `--finish` turns them back into uncommitted changes. If the user stops the build, run `--uncommit` yourself; never ask the user to run `spec-check.sh`.
-2. Read `AGENTS.md` and the skills listed in step 2 of the `branch-review` skill. Read `tdd/SKILL.md`, `testing`, `frontend-testing` and `no-tautological-tests`. Every test you write follows these test skills; the review rounds check it against them.
+2. Read `AGENTS.md`, `tdd/SKILL.md`, `testing`, `frontend-testing` and `no-tautological-tests`. Every test you write follows these test skills; the review rounds check it against them. Read no other skill now: each item loads the skills its code needs (Items, step 5).
 
 ## Items
 
@@ -24,6 +24,13 @@ Work the items in order, one at a time:
 2. Search before you create any function or component. Reuse what exists.
 3. Run the item's check. Do not start the next item while it is red.
 4. Commit: `feat(<task>): item <N> — <behaviour>`. Stage only the files the item changed. Never stage anything under `plans/`. Then tick the item (`[x]`).
+5. Get the skills for the item's code:
+
+   ```bash
+   .devin/skills/branch-review/skills-for.sh HEAD~1 HEAD $(git diff --name-only HEAD~1 HEAD)
+   ```
+
+   Read each skill it prints that you have not read yet. If the item's code breaks one, fix it, run the check again, and commit `refactor(<task>): item <N> — <skill>`.
 
 After the last item, make each story under `## Stories`, following the `storybook` skill. Write no test for a story. Commit: `feat(<task>): story — <export>`.
 

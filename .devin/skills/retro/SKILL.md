@@ -13,10 +13,15 @@ The goal is the steering loop: a mistake that reached the user becomes a rule (a
 
 ## Steps
 
-1. **Collect the evidence** from `plans/<task>/`:
-   - `log.md`: written by hooks, not by an agent. Every message the user sent, every failed tool call, every time the Stop hook blocked the build. The user's messages are the strongest evidence: each correction is a place the harness went wrong.
-   - `spec.md`, `test-review.md`, `review.md` and `summary.md`: what was agreed and what the reviews found.
-   - `git status` and `git diff`: what the user has kept, changed or discarded from the build.
+1. **Collect the evidence** with the script:
+
+   ```bash
+   .devin/skills/retro/retro-context.sh
+   ```
+
+   It prints, from `plans/<task>/` and git: the user's messages, repeated failed tool calls, Stop-hook blocks, blocked items, findings not marked Fixed, "Needs your decision", what the user changed (`git diff --stat`), the earlier retros' problems and the `## Rules` table in `AGENTS.md`. `log.md` is written by hooks, not by an agent. The user's messages are the strongest evidence: each correction is a place the harness went wrong.
+
+   Read a whole file, or a file's `git diff`, only when the script output points to it and does not explain the problem.
 
 2. **List the problems.** One line each, with its evidence (a line of `log.md`, a finding id, an item number):
    - a correction or complaint in the user's messages,
@@ -27,7 +32,7 @@ The goal is the steering loop: a mistake that reached the user becomes a rule (a
 
    For each problem, give its cause only when the evidence isolates it. When several things could explain it (for example, the build changed several things at once, or there is only one occurrence), write **confounded** and name the possible causes. Do not guess a cause.
 
-   Then read the earlier `plans/*/retro.md` files (list them with `git ls-files 'plans/*retro.md'`) and the `## Rules` table in `AGENTS.md`. Mark a problem as **repeated** when it already appears in an earlier retro, or when it breaks a rule in the table that nothing enforces. Give the earlier file or the rule.
+   Then compare with the earlier retros and the Rules table in the script output. Mark a problem as **repeated** when it already appears in an earlier retro, or when it breaks a rule in the table that nothing enforces. Give the earlier file or the rule.
 
 3. **Write `plans/<task>/retro.md`** for the user, in plain English, in exactly this format. No ids, timestamps, tables or field labels. With no lesson, Proposed fix says `No lesson.` and there is no Code section.
 
