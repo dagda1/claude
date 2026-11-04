@@ -1,12 +1,13 @@
 ---
 name: writer
 description: Writes short plain-English text, such as a PR message, from the context in the task prompt, on a cheap model. Writes only the one file the prompt names.
-model: swe-1-6
+model: swe
 allowed-tools:
   - read
   - grep
   - glob
   - exec
+  - edit
   - write
 ---
 

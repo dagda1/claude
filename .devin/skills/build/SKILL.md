@@ -14,7 +14,7 @@ Do not ask the user anything. Every decision you make goes into a file they read
 ## Start
 
 1. `.devin/skills/build/spec-check.sh --start plans/<task>/spec.md`. It refuses a spec that is not approved — then stop and say so. From now on a Stop hook keeps you working while any item is open. The commits you make are checkpoints only; `--finish` turns them back into uncommitted changes. If the user stops the build, run `--uncommit` yourself; never ask the user to run `spec-check.sh`.
-2. Read `AGENTS.md`, `tdd/SKILL.md`, `testing`, `frontend-testing` and `no-tautological-tests`. Every test you write follows these test skills; the review rounds check it against them. Read no other skill now: each item loads the skills its code needs (Items, step 5).
+2. Read `AGENTS.md`, `file-placement`, `tdd/SKILL.md`, `testing`, `frontend-testing` and `no-tautological-tests`. Every test you write follows these test skills; the review rounds check it against them. Read no other skill now: each item loads the skills its code needs (Items, step 5).
 
 ## Items
 
@@ -31,6 +31,8 @@ Work the items in order, one at a time:
    ```
 
    Read each skill it prints that you have not read yet. If the item's code breaks one, fix it, run the check again, and commit `refactor(<task>): item <N> — <skill>`.
+
+A visual item (a `visual:` line in place of a check) has no test and no check. Make the change, commit as in step 4 and tick it. Its story is made with the others below. List it under "Check in Storybook" in the summary; the user approves it there.
 
 After the last item, make each story under `## Stories`, following the `storybook` skill. Write no test for a story. Commit: `feat(<task>): story — <export>`.
 
@@ -71,7 +73,7 @@ Verdict: <verdict of the last review> · Rounds: <n> · Stopped because: <no Req
 
 ## Check in Storybook
 
-- `pnpm --filter <package> storybook`, then [<story name>](http://localhost:<port>/?path=/story/<story id>): <what it should show and what to try>.
+- `pnpm --filter <package> storybook`, then [<story name>](http://localhost:<port>/?path=/story/<story id>): <what it should show and what to try>. For a visual item, start with `Item <N> (visual):`.
 ```
 
 Take the port from the `storybook` script in the package's `package.json`. The story id is the meta `title` and the export name, each lower-cased and kebab-cased, joined by `--`.

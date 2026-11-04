@@ -14,6 +14,7 @@
 #   - [x] 1. <behaviour>       done — its check must pass
 #   - [!] 1. <behaviour>       blocked — needs a `blocked:` line; left for the user
 #     - check: `<command>`
+#     - visual: <story>       instead of check: — no test can see it; the user approves it in Storybook
 #
 # The active build and its starting commit are recorded in .git/, so they are never committed.
 # Ending a build resets the branch to the starting commit with --soft: every change the
@@ -33,16 +34,22 @@ trap 'rm -f "$LOG"' EXIT
 RE_ITEM='^- \[([ xX!])\] ([0-9]+)\.'
 RE_CHECK='check: `(.*)`'
 RE_BLOCKED='blocked: .+'
+RE_VISUAL='visual: (.+)'
 
 check_spec() {
-  local spec="$1" failed=0 item="" state="" has_check=0 has_blocked=0
+  local spec="$1" failed=0 item="" state="" has_check=0 has_blocked=0 visual=""
 
   [[ -f "$spec" ]] || { echo "spec not found: $spec"; return 1; }
 
   end_item() {
     [[ -z "$item" ]] && return
-    if [[ $has_check -eq 0 ]]; then
-      echo "item $item: NO CHECK — every item needs a check: line"
+    if [[ $has_check -eq 1 && -n "$visual" ]]; then
+      echo "item $item: CHECK AND VISUAL — an item has one or the other"
+      failed=1
+    elif [[ -n "$visual" ]]; then
+      echo "item $item: VISUAL — approve in Storybook: $visual"
+    elif [[ $has_check -eq 0 ]]; then
+      echo "item $item: NO CHECK — every item needs a check: or visual: line"
       failed=1
     fi
     if [[ "$state" == "!" && $has_blocked -eq 0 ]]; then
@@ -58,12 +65,15 @@ check_spec() {
       item="${BASH_REMATCH[2]}"
       has_check=0
       has_blocked=0
+      visual=""
       if [[ "$state" == " " ]]; then
         echo "item $item: OPEN"
         failed=1
       fi
     elif [[ -n "$item" && "$line" =~ $RE_BLOCKED ]]; then
       has_blocked=1
+    elif [[ -n "$item" && "$line" =~ $RE_VISUAL ]]; then
+      visual="${BASH_REMATCH[1]}"
     elif [[ -n "$item" && "$line" =~ $RE_CHECK ]]; then
       has_check=1
       local cmd="${BASH_REMATCH[1]}"

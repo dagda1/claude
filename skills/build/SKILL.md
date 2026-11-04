@@ -13,7 +13,7 @@ Do not ask the user anything. Every decision you make goes into a file they read
 ## Start
 
 1. `.claude/skills/build/spec-check.sh --start plans/<task>/spec.md`. It refuses a spec that is not approved — then stop and say so. From now on a Stop hook keeps you working while any item is open. The commits you make are checkpoints only; `--finish` turns them back into uncommitted changes. If the user stops the build, run `--uncommit` yourself; never ask the user to run `spec-check.sh`.
-2. Read `AGENTS.md`. Run `.claude/skills/skills-for-files.sh` on the files you expect to change, and read the skills it names. Read `tdd/SKILL.md`, `frontend-testing`, `no-tautological-tests` and `code-test-colocation`. Every test you write follows these test skills; the review rounds check it against them.
+2. Read `AGENTS.md`, `tdd/SKILL.md`, `frontend-testing`, `no-tautological-tests` and `code-test-colocation`. Every test you write follows these test skills; the review rounds check it against them. Read no other skill now: each item loads the skills its code needs (Items, step 5).
 
 ## Items
 
@@ -23,6 +23,15 @@ Work the items in order, one at a time:
 2. Search before you create any function or component. Reuse what exists.
 3. Run the item's check. Do not start the next item while it is red.
 4. Commit: `feat(<task>): item <N> — <behaviour>`. Stage only the files the item changed. Never stage anything under `plans/`. Then tick the item (`[x]`).
+5. Get the skills for the item's code:
+
+   ```bash
+   .claude/skills/branch-review/skills-for.sh HEAD~1 HEAD $(git diff --name-only HEAD~1 HEAD)
+   ```
+
+   Read each skill it prints that you have not read yet. If the item's code breaks one, fix it, run the check again, and commit `refactor(<task>): item <N> — <skill>`.
+
+A visual item (a `visual:` line in place of a check) has no test and no check. Make the change, commit as in step 4 and tick it. Its story is made with the others below. List it under "Check in Storybook" in the summary; the user approves it there.
 
 After the last item, make each story under `## Stories`, following the Storybook rules in `frontend-component-structure`. Write no test for a story. Commit: `feat(<task>): story — <export>`.
 
@@ -63,7 +72,7 @@ Verdict: <verdict of the last review> · Rounds: <n> · Stopped because: <no Req
 
 ## Check in Storybook
 
-- `pnpm --filter <package> storybook`, then [<story name>](http://localhost:<port>/?path=/story/<story id>): <what it should show and what to try>.
+- `pnpm --filter <package> storybook`, then [<story name>](http://localhost:<port>/?path=/story/<story id>): <what it should show and what to try>. For a visual item, start with `Item <N> (visual):`.
 ```
 
 Take the port from the `storybook` script in the package's `package.json`. The story id is the meta `title` and the export name, each lower-cased and kebab-cased, joined by `--`.

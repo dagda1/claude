@@ -1,7 +1,7 @@
 ---
 name: branch-review
 description: Review any branch — check diff, analyze code against standards, provide recommendations
-argument-hint: "[branch] [base] [since]"
+argument-hint: '[branch] [base] [since]'
 triggers:
   - user
 allowed-tools:
@@ -9,7 +9,7 @@ allowed-tools:
   - grep
   - glob
   - exec
-  - write
+  - edit
 ---
 
 # Branch Review
@@ -31,31 +31,26 @@ Review a branch by analyzing its changed files against project standards and pro
    ```
 
    It checks out the target and prints `ORIGINAL`, `TARGET`, `BASE`, `MERGE_BASE`, `FROM`
-   and `REPORT_FILE`. Then, for each package, it prints the changed files and the skills
-   that apply to them. Last, it prints the jscpd clones that touch the changed files. Do
-   not repeat any of this work yourself.
+   and `REPORT_FILE`. Then it prints the reviewer's input: one batch (more only for a diff
+   too large for one reviewer), with its file count, the skills that apply and the chunk
+   files holding those skills and the numbered diff. Then it prints the oxlint errors in the
+   changed files, and last the jscpd clones that touch them. Do not repeat any of this work
+   yourself, and do not read the chunk files.
+
+   Each oxlint error is a Required finding as printed: cite its file, line and rule. Do not
+   look for lint-level issues yourself, and do not pass lint output to the reviewers.
 
    `FROM` is the merge base, or the `since` commit when one is given. Every diff below is
    taken from `FROM`.
 
-2. **Project standards.** Do not read these yourself. The skills come from
-   `skill-globs.txt`: a skill loads only when a changed file matches its glob and, where
-   the line has a regex, when a line the diff adds matches it. Pass each package's skill
-   list to that package's `reviewer` subagent, and pass only what the script printed.
+2. **Project standards.** The skills come from `skill-globs.txt`: a skill loads only when a
+   changed file matches its glob and, where the line has a regex, when a line the diff adds
+   matches it. They are already in the chunk files.
 
-3. **Analyze each package** that the script printed:
-
-   Always run this in the `reviewer` subagent, one per package, all launched in the same
-   message, even for a small diff. Give each one its files, its skills, `FROM` and
-   `TARGET`. Merge their findings. Where subagents aren't available (Cascade), work through
-   the packages sequentially in a single pass.
-
-   - Read the diff with line numbers: `.devin/skills/branch-review/numbered-diff.sh $FROM $TARGET $file`.
-     Read the whole file only when the diff context does not explain a line.
-   - Review a file and its colocated test (`foo.ts` + `foo.test.ts`) as one unit — a
-     finding in one is usually explained by the other
-   - Apply standards: code patterns, file structure, testing coverage, documentation
-   - Identify violations, patterns, opportunities, risks
+3. **Analyze each batch** in the `reviewer` subagent, one per batch, all launched in the
+   same message. Give each one its chunk file paths, `FROM` and `TARGET`, and nothing else.
+   Merge their findings. Where subagents aren't available (Cascade), read the chunks and
+   review each batch yourself.
 
 4. **Cross-reference the codebase**
    - Search for similar existing patterns and duplication opportunities
@@ -110,6 +105,7 @@ Review a branch by analyzing its changed files against project standards and pro
      ```
 
      `MOVED`: correct the reference to the line it gives. `MISSING`: drop the finding.
+
    - Reflection pass: re-read each Required finding against the file one final time and
      keep it only if you would stake the verdict on it being a real defect. Fewer, certain
      findings beat coverage — a false alarm costs more trust than a miss.

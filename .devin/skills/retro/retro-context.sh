@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # retro-context.sh — collects the evidence a retro needs and prints only the parts that
 # can show a problem: user messages, repeated failures, Stop-hook blocks, blocked items,
-# findings that were not fixed, what the user changed, earlier retros and the Rules table.
+# findings that were not fixed, what the user changed and earlier retros.
 # Usage: retro-context.sh    (the task is the current branch)
 set -euo pipefail
 
@@ -36,8 +36,11 @@ for review in test-review.md review.md; do
   echo
   echo "## Findings in $review not marked Fixed"
   touch_none "$(awk '
-    /^### [0-9]+\.[0-9]+/ { head = $0; line = FNR; next }
+    function flush() { if (head != "") print line ": " head "\n    Result: none"; head = "" }
+    /^### [0-9]+\.[0-9]+/ { flush(); head = $0; line = FNR; next }
+    /^#{1,3} / { flush(); next }
     head != "" && /^Result: / { if ($0 !~ /^Result: Fixed/) print line ": " head "\n    " $0; head = "" }
+    END { flush() }
   ' "$DIR/$review" 2>/dev/null || true)"
 done
 
@@ -60,7 +63,3 @@ while read -r f; do
   awk '/^## What went wrong/ { on = 1; next } /^## / { on = 0 } on && /^- /' "$f"
 done < <(git ls-files 'plans/*retro.md')
 [[ -n "$found" ]] || echo "None."
-
-echo
-echo "## Rules table (AGENTS.md)"
-touch_none "$(awk '/^## Rules/ { on = 1; next } /^## / { on = 0 } on && NF' AGENTS.md 2>/dev/null || true)"

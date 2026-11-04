@@ -45,7 +45,13 @@
       "Bash(pnpm --filter:*)",
       "Bash(node_modules/.bin/jscpd:*)",
       "Bash(.claude/skills/build/spec-check.sh:*)",
-      "Bash(.claude/skills/skills-for-files.sh:*)"
+      "Bash(.claude/skills/branch-review/skills-for.sh:*)",
+      "Bash(.claude/skills/branch-review/review-prep.sh:*)",
+      "Bash(.claude/skills/branch-review/review-bundle.sh:*)",
+      "Bash(.claude/skills/branch-review/check-quotes.sh:*)",
+      "Bash(.claude/skills/branch-review/numbered-diff.sh:*)",
+      "Bash(.claude/skills/pr-message/pr-context.sh:*)",
+      "Bash(.claude/skills/retro/retro-context.sh:*)"
     ],
     "ask": [
       "Bash(rm:*)",

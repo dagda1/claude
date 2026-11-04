@@ -1,7 +1,7 @@
 ---
 name: pr-comments
 description: Review a branch and output paste-ready PR comments grouped by file, one comment per line, bugs only
-argument-hint: "[branch] [base]"
+argument-hint: '[branch] [base]'
 triggers:
   - user
 allowed-tools:
@@ -9,7 +9,7 @@ allowed-tools:
   - grep
   - glob
   - exec
-  - write
+  - edit
 ---
 
 # PR Comments
@@ -34,24 +34,19 @@ no "consider".
    CHANGED_FILES=$(git diff --name-only "$MERGE_BASE" origin/"$TARGET" -- "*.ts" "*.tsx" "*.js" "*.jsx" "*.css" "*.json" | grep -v node_modules | grep -v "\.d\.ts$")
    ```
 
-2. **Project standards.** Do not read these yourself. Group `$CHANGED_FILES` by package
-   (`apps/<name>` or `packages/<name>`). For each package, get its skills:
+2. **Build the reviewer's input.** It writes the skills that apply and the numbered diff
+   into chunk files and prints one batch (more only for a very large diff). Do not read the
+   chunks yourself:
 
    ```bash
-   .devin/skills/branch-review/skills-for.sh "$MERGE_BASE" origin/"$TARGET" <the package's changed files>
+   .devin/skills/branch-review/review-bundle.sh "$MERGE_BASE" origin/"$TARGET" "${TMPDIR:-/tmp}/pr-comments-$(echo "$TARGET" | tr '/' '-')" $CHANGED_FILES
    ```
 
-3. **Analyze each package** in the `reviewer` subagent, one per package, all launched in
-   the same message. Give each one its files, its skills, and this diff command, which
-   prints each line with its line number on the branch:
-
-   ```bash
-   .devin/skills/branch-review/numbered-diff.sh "$MERGE_BASE" origin/"$TARGET" <file>
-   ```
-
-   Tell it to read the whole file (`git show origin/"$TARGET":"$file"`) only when the diff
-   context does not explain a line. Tell it to list every suspected bug on the changed
-   lines and drop nothing. Merge their lists.
+3. **Analyze each batch** in the `reviewer` subagent, one per batch, all launched in the
+   same message. Give each one its chunk file paths, `MERGE_BASE` and `origin/$TARGET`.
+   Tell it to read a whole file (`git show origin/"$TARGET":"$file"`) only when the diff
+   context does not explain a line, and to list every suspected bug on the changed lines
+   and drop nothing. Merge their lists.
 
 4. **Test each suspected bug** against the codebase: check callers and existing
    patterns, then name the input, the code path and the wrong result. Drop it only

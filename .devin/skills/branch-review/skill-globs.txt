@@ -1,41 +1,62 @@
-# <glob> <skill> [<regex>]
-# A changed file loads every skill whose glob matches it. `*` matches across `/`.
-# With a regex, the skill loads only when a line the diff adds to that file matches it
-# (grep -E). The regex runs to the end of the line and must not contain spaces.
-# First match does not stop the search: a file can load many skills.
-*.ts                    typescript-conventions
-*.tsx                   typescript-conventions
-*.ts                    no-boolean-params
-*.tsx                   no-boolean-params
-*.ts                    no-defensive-fallbacks   \?\?|\|\||\?\.
-*.tsx                   no-defensive-fallbacks   \?\?|\|\||\?\.
-*.ts                    no-swallowed-errors      catch|onError
-*.tsx                   no-swallowed-errors      catch|onError
-*.ts                    bundle-imports           ^\+[[:space:]]*import
-*.tsx                   bundle-imports           ^\+[[:space:]]*import
-*.tsx                   component-architecture
-*.tsx                   frontend
-*.tsx                   react-hooks              \buse[A-Z]
-*/use*.ts               react-hooks
-*.tsx                   no-render-functions      render[A-Z]
-*.tsx                   frontend-suspense        Suspense|lazy\(
-*.tsx                   i18n                     >[^<{]*[A-Za-z]|useTranslation|\bt\(
-*.tsx                   styling                  className|style=|sx=|styled
-*.css                   styling
-*.tsx                   prefer-table2            <[Tt]able
-*.tsx                   prefer-router-links      href=|navigate\(|window\.location
-*.tsx                   responsive-svg           <svg|viewBox
-*api*                   api-calls
-*.ts                    api-calls                fetch\(|useQuery|useMutation
-*.tsx                   api-calls                fetch\(|useQuery|useMutation
-*schema*                zod-schemas
-*.ts                    zod-schemas              \bz\.
-*schema*                rjsf-first
-*route*                 routes-in-config
-*.test.ts               testing
-*.test.tsx              testing
-*.test.tsx              frontend-testing
-*.test.ts               no-tautological-tests
-*.test.tsx              no-tautological-tests
-*.test.tsx              no-probe-components
-*.stories.tsx           storybook
+# skill-globs.txt — which skills load for a changed file. Read by skills-for.sh.
+# Format: <glob> <skill> [<regex>]
+# One skill per line. Every matching line applies. The glob is a bash extglob matched
+# against the repo-relative path. With a regex, the line applies only when a line the
+# diff adds to the file matches it (grep -E).
+
+# Tests
+@(*.test|*.spec).@(ts|tsx) testing
+@(*.test|*.spec).@(ts|tsx) frontend-testing
+@(*.test|*.spec).@(ts|tsx) no-tautological-tests
+@(*.test|*.spec).@(ts|tsx) no-probe-components
+
+# Stories
+*.stories.tsx storybook
+
+# Styles
+*styles.ts styling
+*styles.ts frontend
+
+# Locales
+*locales/*.json i18n
+
+# React components
+!(*.test|*.spec|*.stories).tsx component-architecture
+!(*.test|*.spec|*.stories).tsx frontend
+!(*.test|*.spec|*.stories).tsx styling
+!(*.test|*.spec|*.stories).tsx i18n
+!(*.test|*.spec|*.stories).tsx no-boolean-params
+!(*.test|*.spec|*.stories).tsx no-defensive-fallbacks
+
+# Plain TS
+!(*.test|*.spec|*styles).ts no-defensive-fallbacks
+!(*.test|*.spec|*styles).ts no-boolean-params
+
+# By path, where no import identifies the file
+@(*/hooks/*|*/use[A-Z]*) react-hooks
+@(packages/*/src/index.ts|*package.json|*vite.config.*|*.storybook/*) bundle-imports
+*package.json file-placement
+packages/form/* rjsf-first
+packages/theme/* styling
+
+# By import or usage in the added lines
+*.@(ts|tsx|js|jsx) api-calls from ['"]@tanstack/react-query['"]
+*.@(ts|tsx|js|jsx) react-hooks from ['"]@tanstack/react-query['"]
+*.@(ts|tsx|js|jsx) frontend-suspense from ['"]@tanstack/react-query['"]
+*.@(ts|tsx|js|jsx) api-calls from ['"]urql['"]
+*.@(ts|tsx|js|jsx) react-hooks from ['"]urql['"]
+*.@(ts|tsx|js|jsx) frontend-suspense from ['"]urql['"]
+*.@(ts|tsx|js|jsx) api-calls [{ ,]xior[ ,}]
+*.@(ts|tsx|js|jsx) zod-schemas from ['"]zod['"]
+*.@(ts|tsx|js|jsx) prefer-router-links from ['"]react-router['"]
+*.@(ts|tsx|js|jsx) routes-in-config from ['"]react-router['"]
+*.@(ts|tsx|js|jsx) prefer-router-links window\.location|href=
+*.@(ts|tsx|js|jsx) bundle-imports lazy\(
+*.@(ts|tsx|js|jsx) responsive-svg from ['"]@visx/|<svg[ >]
+*.@(ts|tsx|js|jsx) prefer-table2 from ['"]@mui/material/Table
+*.@(ts|tsx|js|jsx) rjsf-first from ['"](@rjsf/|@harbour/form)
+*.@(ts|tsx|js|jsx) no-unnecessary-effects use(Layout)?Effect\(
+*.@(ts|tsx|js|jsx) frontend-suspense isLoading|<Suspense
+*.@(ts|tsx|js|jsx) i18n from ['"]@harbour/translator['"]
+*.@(ts|tsx|js|jsx) styling theme\.palette|@mui/material/styles
+*.@(ts|tsx|js|jsx) no-swallowed-errors catch|return;

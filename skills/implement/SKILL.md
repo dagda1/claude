@@ -16,8 +16,9 @@ Implement the work in the spec the user points at.
    command is not ready to build.
 2. Agree the seams with the user per the `tdd` skill: which public boundaries
    get tests. No test at an unconfirmed seam.
-3. Run `.claude/skills/skills-for-files.sh` on the files you expect to touch
-   and read the skills it names.
+3. Run `.claude/skills/branch-review/skills-for.sh HEAD HEAD <files>` on the
+   files you expect to touch and read the skills it names. With no diff yet,
+   only the rules with no regex apply.
 
 ## During the pass
 

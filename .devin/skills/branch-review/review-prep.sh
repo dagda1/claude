@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # review-prep.sh — does every step of a branch review that needs no judgement, and prints
-# what the reviewer needs: the refs, the report path, the changed files and skills for each
-# package, and the jscpd clones that touch the changed files.
+# what the review needs: the refs, the report path, the reviewer's input chunks (from
+# review-bundle.sh), the oxlint errors and the jscpd clones that touch the changed files.
 #
 # Usage: review-prep.sh [target] [base] [since]
 #   target  branch to review (default: current branch)
@@ -46,26 +46,24 @@ EOF
 
 [[ -n "$CHANGED" ]] || { echo; echo "No changed files."; exit 0; }
 
-# A package is the first two path segments under apps/ or packages/; anything else is root.
-package_of() {
-  case "$1" in
-    apps/*/* | packages/*/*) echo "$1" | cut -d/ -f1-2 ;;
-    *) echo "root" ;;
-  esac
-}
+echo
+CHANGED_FILES=()
+while read -r f; do CHANGED_FILES+=("$f"); done <<<"$CHANGED"
+"$HERE/review-bundle.sh" "$FROM" "$TARGET" "${TMPDIR:-/tmp}/review-$(echo "$TARGET" | tr '/' '-')" "${CHANGED_FILES[@]}"
 
-for pkg in $(while read -r f; do package_of "$f"; done <<<"$CHANGED" | sort -u); do
-  files=()
-  while read -r f; do [[ "$(package_of "$f")" == "$pkg" ]] && files+=("$f"); done <<<"$CHANGED"
-  echo
-  echo "## Package $pkg"
-  echo
-  echo "Files:"
-  printf -- '- %s\n' "${files[@]}"
-  echo
-  echo "Skills:"
-  "$HERE/skills-for.sh" "$FROM" "$TARGET" "${files[@]}" | sed 's/^/- /'
-done
+echo
+echo "## oxlint"
+echo
+LINTABLE=()
+while read -r f; do
+  [[ "$f" =~ \.(ts|tsx|js|jsx|mts)$ && -f "$f" ]] && LINTABLE+=("$f")
+done <<<"$CHANGED"
+if ((${#LINTABLE[@]})); then
+  LINT="$(node_modules/.bin/oxlint --quiet --format unix "${LINTABLE[@]}" 2>&1 || true)"
+  if [[ -n "$LINT" ]]; then echo "$LINT"; else echo "No lint errors."; fi
+else
+  echo "No lintable files."
+fi
 
 echo
 echo "## jscpd"

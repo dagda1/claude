@@ -5,6 +5,7 @@
 # A rule with a regex matches only when a line that `git diff <from> <target>` adds to the
 # file matches the regex.
 set -euo pipefail
+shopt -s extglob
 
 MAP="$(dirname "$0")/skill-globs.txt"
 [[ -f "$MAP" ]] || { echo "no glob map: $MAP" >&2; exit 1; }

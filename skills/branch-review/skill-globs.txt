@@ -1,0 +1,55 @@
+# skill-globs.txt — which skills load for a changed file. Read by skills-for.sh.
+# Format: <glob> <skill> [<regex>]
+# One skill per line. Every matching line applies. The glob is a bash extglob matched
+# against the repo-relative path. With a regex, the line applies only when a line the
+# diff adds to the file matches it (grep -E).
+# assistant-* are behaviour skills, not file-scoped.
+
+# Review rules: every review
+* review-pr-size
+* review-report-format
+* review-secret-scanning
+
+# Tests
+@(*.test|*.spec).@(ts|tsx) frontend-testing
+@(*.test|*.spec).@(ts|tsx) no-tautological-tests
+@(*.test|*.spec).@(ts|tsx) code-test-colocation
+
+# CDK / deploy
+@(*deploy/*|*.stack.ts|*/cdk/*) cdk-construct-conventions
+@(*deploy/*|*.stack.ts|*/cdk/*) cdk-custom-resources
+@(*deploy/*|*.stack.ts|*/cdk/*) cdk-iam-least-privilege
+@(*deploy/*|*.stack.ts|*/cdk/*) cdk-stateful-resources
+
+# React components
+!(*.test|*.spec|*.stories).tsx frontend-react-typescript
+!(*.test|*.spec|*.stories).tsx frontend-component-structure
+!(*.test|*.spec|*.stories).tsx frontend-no-boolean-params
+!(*.test|*.spec|*.stories).tsx frontend-no-render-functions
+!(*.test|*.spec|*.stories).tsx code-no-defensive-fallbacks
+!(*.test|*.spec|*.stories).tsx code-test-colocation
+
+# Plain TS
+!(*.test|*.spec|*.d).ts code-error-handling
+!(*.test|*.spec|*.d).ts code-style-defaults
+!(*.test|*.spec|*.d).ts code-trust-the-types
+!(*.test|*.spec|*.d).ts code-no-defensive-fallbacks
+!(*.test|*.spec|*.d).ts code-test-colocation
+
+# By path, where no import identifies the file
+@(*/api/*|*Query.ts|*Query.tsx|*queries/*) frontend-api-calls
+@(*theme*|*/styles/*) frontend-mui-theming
+@(*[Ss]chema*|*validation*|*[Zz]od*) frontend-zod-validation
+@(packages/*/src/index.ts|*package.json|*vite.config.*) frontend-bundle-imports
+
+# By import or usage in the added lines
+*.@(ts|tsx|js|jsx) frontend-react-query from ['"]@tanstack/react-query['"]
+*.@(ts|tsx|js|jsx) frontend-api-calls from ['"]@tanstack/react-query['"]
+*.@(ts|tsx|js|jsx) frontend-suspense from ['"]@tanstack/react-query['"]
+*.@(ts|tsx|js|jsx) frontend-suspense isLoading|<Suspense
+*.@(ts|tsx|js|jsx) frontend-zod-validation from ['"]zod['"]
+*.@(ts|tsx|js|jsx) frontend-prefer-router-links from ['"]react-router|window\.location|href=
+*.@(ts|tsx|js|jsx) frontend-routing from ['"]react-router
+*.@(ts|tsx|js|jsx) frontend-bundle-imports lazy\(
+*.@(ts|tsx|js|jsx) frontend-mui-theming theme\.palette|@mui/material/styles|sx=
+*.@(ts|tsx|js|jsx) no-unnecessary-effects use(Layout)?Effect\(

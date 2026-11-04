@@ -1,8 +1,7 @@
 ---
 name: pr-message
 description: Write a concise, plain-English PR message to a markdown file in the tmp folder
-argument-hint: "[base]"
-agent: writer
+argument-hint: '[base]'
 triggers:
   - user
 allowed-tools:
@@ -28,9 +27,12 @@ Write a concise PR message in plain English to a markdown file in the tmp folder
    .devin/skills/pr-message/pr-context.sh "$1"
    ```
 
-2. Write the message to `MESSAGE_FILE`, following the Title rules, Bullet rules and Format
-   below. Read a file's diff (`git diff <MERGE_BASE>..HEAD -- <file>`) only when the
-   commits and spec do not explain that file.
+2. Give the whole script output to the `writer` subagent, run in the foreground so it can
+   be approved to write outside the repo. Tell it to write the message to
+   `MESSAGE_FILE` and to follow the Title rules, Bullet rules and Format in
+   `.devin/skills/pr-message/SKILL.md`. Tell it to read a file's diff
+   (`git diff <MERGE_BASE>..HEAD -- <file>`) only when the commits and spec do not explain
+   that file. Do not read the diff yourself.
 
    `MESSAGE_FILE` is in the system temp dir, outside the repo. Write outside the repo, **not** to a repo folder: a repo `tmp/` is gitignored and
    Cascade's write tool silently skips gitignored paths, while any non-ignored repo folder

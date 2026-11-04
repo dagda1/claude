@@ -19,7 +19,7 @@ The goal is the steering loop: a mistake that reached the user becomes a rule (a
    .devin/skills/retro/retro-context.sh
    ```
 
-   It prints, from `plans/<task>/` and git: the user's messages, repeated failed tool calls, Stop-hook blocks, blocked items, findings not marked Fixed, "Needs your decision", what the user changed (`git diff --stat`), the earlier retros' problems and the `## Rules` table in `AGENTS.md`. `log.md` is written by hooks, not by an agent. The user's messages are the strongest evidence: each correction is a place the harness went wrong.
+   It prints, from `plans/<task>/` and git: the user's messages, repeated failed tool calls, Stop-hook blocks, blocked items, findings not marked Fixed, "Needs your decision", what the user changed (`git diff --stat`), and the earlier retros' problems. `log.md` is written by hooks, not by an agent. The user's messages are the strongest evidence: each correction is a place the harness went wrong.
 
    Read a whole file, or a file's `git diff`, only when the script output points to it and does not explain the problem.
 
@@ -32,7 +32,7 @@ The goal is the steering loop: a mistake that reached the user becomes a rule (a
 
    For each problem, give its cause only when the evidence isolates it. When several things could explain it (for example, the build changed several things at once, or there is only one occurrence), write **confounded** and name the possible causes. Do not guess a cause.
 
-   Then compare with the earlier retros and the Rules table in the script output. Mark a problem as **repeated** when it already appears in an earlier retro, or when it breaks a rule in the table that nothing enforces. Give the earlier file or the rule.
+   Then compare with the earlier retros in the script output. Mark a problem as **repeated** when it already appears in an earlier retro, or when it breaks an always-on rule in `AGENTS.md` that nothing enforces. Give the earlier file or the rule.
 
 3. **Write `plans/<task>/retro.md`** for the user, in plain English, in exactly this format. No ids, timestamps, tables or field labels. With no lesson, Proposed fix says `No lesson.` and there is no Code section.
 

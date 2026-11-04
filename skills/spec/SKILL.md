@@ -20,13 +20,15 @@ Everything for the task lives in `plans/<task>/`. This skill writes `spec.md` an
    - the behaviour, item by item,
    - what is out of scope,
    - the seams each item is tested at (the `tdd` skill: test only at agreed seams),
-   - the one command that proves each item done.
+   - the one command that proves each item done, or, for a visual item, the story the user approves it in.
 
    Ask about a seam only when the test skills leave it open.
 
-   When a bug fix changes what the user sees, ask the user whether it needs a story that shows the fixed state. A story is only for the user to look at. It is never an item, has no check and no test, and never stands in for one. If they agree, it goes under `## Stories`. Never ask how a story is tested or checked.
+   When a bug fix changes what the user sees, ask the user whether it needs a story that shows the fixed state. A story is only for the user to look at. It is never an item, has no check and no test, and never stands in for a check that a test could make. If they agree, it goes under `## Stories`. Never ask how a story is tested or checked.
 
-4. **Write `plans/<task>/spec.md`** in the format below. Each item has exactly one `check:` command. An item with no check is not ready — go back to the interview, do not invent one.
+   A visual item is one no test can see without faking the browser, such as layout. It has a `visual:` line naming its story instead of a check. It is visual only when the user agrees no honest test exists. When it cannot be settled in text, build its story and try solutions in it with the user. The picked code stays for `/build` to review.
+
+4. **Write `plans/<task>/spec.md`** in the format below. Each item has exactly one `check:` command or exactly one `visual:` line. An item with neither is not ready — go back to the interview, do not invent one.
 
    Put every fact you verified about the code during the interview under `## Facts`, with the file and line where you found it. Write the fact itself ("`status` in `api/types.ts:42` is `'open' | 'closed'`"), not how to find it, so `/build` does not have to find it again. Only verified facts: a guessed fact is worse than none. Say how each fact is verified, and take each one as far as is cheap:
 
@@ -36,7 +38,7 @@ Everything for the task lives in `plans/<task>/`. This skill writes `spec.md` an
 
    A fact that an item's safety depends on must be `ran`.
 
-5. **Write the acceptance tests.** One test per item, at the agreed seam. This is the outer loop that defines done; the red → green loop for each item happens in `/build`. Before you write a test, read the test skills:
+5. **Write the acceptance tests.** One test per item with a check, at the agreed seam. A visual item has no test. This is the outer loop that defines done; the red → green loop for each item happens in `/build`. Before you write a test, read the test skills:
    - `tdd/SKILL.md`,
    - `frontend-testing`, `no-tautological-tests` and `code-test-colocation` in `.claude/skills/`.
 
@@ -44,7 +46,7 @@ Everything for the task lives in `plans/<task>/`. This skill writes `spec.md` an
 
 6. **Review the tests.** First run `git add -N <new test files>` so `git diff` shows them; this commits nothing. Then use the `reviewer` subagent (the Agent tool, `subagent_type: reviewer`): give it the test files, the same test skills, and the uncommitted diff from the branch's merge base (`git diff $(git merge-base origin/<base> HEAD)`). It reviews against the skills only — it did not write the tests. Write its findings to `plans/<task>/test-review.md` and act on each one with a `Result:` line (Fixed with what changed, Skipped with a reason, or Invalid with why), in the format of a build round of `.claude/skills/branch-review/SKILL.md` but with no commit ids. Repeat the review on the fixes until it reports no Required findings, at most three rounds.
 
-7. **Prove they fail.** Run `.claude/skills/build/spec-check.sh plans/<task>/spec.md`. Every item must report `FAIL` for the right reason (the behaviour is missing, not a typo or a missing import). A check that passes now proves nothing — fix it.
+7. **Prove they fail.** Run `.claude/skills/build/spec-check.sh plans/<task>/spec.md`. Every item with a check must report `FAIL` for the right reason (the behaviour is missing, not a typo or a missing import). A check that passes now proves nothing — fix it. A visual item reports `VISUAL`. When no item has a test, skip steps 6 and 7's test work and link no test files or `test-review.md` in step 8.
 
 8. **Stop for approval.** Commit nothing, before or after approval. Any text you write comes first. Then the line "Reply `approved` to approve the spec, or say what to change." Then the links to the spec, each test file and `test-review.md`, one per line. Write each link as a markdown link to the absolute path, `[name](file:///absolute/path)`; a relative link does not open in the terminal. The links are the last thing in the message. Write nothing after them. When they approve, change `Status: draft` to `Status: approved` and tell them to start a new session on this branch with `/build`. If they want changes, make them and repeat from step 6.
 
@@ -73,14 +75,16 @@ Branch: <task>
 - [ ] 1. <One behaviour, one sentence.>
   - check: `<command that fails now and passes when the item is done>`
   - test: `<path to the acceptance test>`
-- [ ] 2. ...
+- [ ] 2. <A visual behaviour, one sentence.>
+  - visual: <story file and export>
+- [ ] 3. ...
 
 ## Stories
 
 - <Story file and export>: <the state it shows>.
 ```
 
-Omit `## Stories` when the user asked for no story.
+Omit `## Stories` when the user asked for no story. Every story a `visual:` line names is listed under `## Stories`.
 
 A check is one shell command run from the repo root, for example `pnpm --filter @app/frontend exec vitest run src/pages/Results/Results.test.tsx`. Keep it to the one test file, so it is fast.
 
