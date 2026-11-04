@@ -108,8 +108,8 @@ The arguments are in `$ARGUMENTS`.
 A slash-command skill can tell Claude to load specific skills before doing work. Example from `skills/branch-review/SKILL.md`:
 
 ```markdown
-Read `AGENTS.md`, the `review-*` skills in `.claude/skills/`, and the skills that
-`.claude/skills/skills-for-files.sh` names for the changed files.
+Read each skill that `.claude/skills/branch-review/skills-for.sh` prints for the
+changed files. `skill-globs.txt` beside it maps file globs, and regexes on added lines, to skills.
 ```
 
 This keeps the command body tight and the skills independently reusable.
