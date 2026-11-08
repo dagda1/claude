@@ -34,30 +34,22 @@ The goal is the steering loop: a mistake that reached the user becomes a rule (a
 
    Then compare with the earlier retros in the script output. Mark a problem as **repeated** when it already appears in an earlier retro, or when it breaks an always-on rule in `AGENTS.md` that nothing enforces. Give the earlier file or the rule.
 
-3. **Write `plans/<task>/retro.md`** for the user, in plain English, in exactly this format. No ids, timestamps, tables or field labels. With no lesson, Proposed fix says `No lesson.` and there is no Code section.
+3. **Write `plans/<task>/retro.md`** for the user, in exactly this format and nothing more: only the problem the lesson fixes, never the full list from step 2. With no lesson, write the problem line and `Fix: No lesson.`, with no code.
 
    ````markdown
    # <task> — retro
 
    ## What went wrong
 
-   <one line on what went well and what did not>:
+   - <the one problem, one short sentence>
 
-   - <one plain sentence per problem>
-
-   ## Proposed fix
-
-   <the one change in plain words. What it fixes, and what it leaves.>
-
-   ## Code
+   Fix: <the one change, one short sentence>
 
    In `<file>`, <where>:
 
    ```<lang>
    <the exact code or text>
    ```
-
-   <one line: it fails on this task's mistake and passes on the fix.>
    ````
 
    Choose the fix with these rules. They guide the choice and do not appear in the report:

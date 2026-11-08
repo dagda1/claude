@@ -61,7 +61,6 @@ Arguments, in order: `$ARGUMENTS`
    - Drop it if the halves differ in values, not just names.
    - Drop repeated style blocks unless one is a copy of a shared style module.
    - Keep code clones: functions, hooks, logic, column definitions, components.
-   - If it already existed at `$MERGE_BASE` (check with `git show`), it can only be Consider.
 
    Put a `## jscpd` section straight under the verdict. List every kept clone in it, each
    with what is repeated, both halves as `file:start-end`, and the repeated code (the
@@ -81,9 +80,9 @@ Arguments, in order: `$ARGUMENTS`
 
 5. **Generate review report**
    - Summary: `$TARGET` vs `$BASE`, assessment (COMPLIANT / NEEDS_WORK / BLOCKING)
-   - Report only what you verified. A finding you cannot tie to a line the diff added or
-     changed does not go in, not as a lower severity, not as "worth noting", not as a
-     follow-up. A short report is the good outcome; never lengthen one to look thorough.
+   - Report only what you verified. Code in a changed file counts, including code that was
+     only moved or that predates the branch; never drop a finding for that reason. The
+     user decides scope.
    - Position check: every finding quotes the exact line it cites. Before writing the
      report, pipe every finding to the script, one per line as
      `<file><TAB><line><TAB><quote>`:
@@ -155,8 +154,6 @@ review: the reader audits it after the fact, so nothing in it is deleted. Add on
 line directly under the finding's heading:
 
 - `Result: Fixed — <what changed>`.
-- `Result: Skipped — <reason>` — a reason the reader can judge, not "out of scope".
-- `Result: Invalid — <why the finding was wrong>`.
 - `Result: Repeated — came back after <finding id> was fixed; left for the user`.
 - `Result: Open` — not acted on; the reader decides.
 

@@ -26,37 +26,29 @@ The goal is the steering loop: a mistake that reached the user becomes a rule (a
    - a correction or complaint in the user's messages,
    - a change the user discarded or rewrote,
    - a command that failed again and again, or a Stop-hook block,
-   - a finding marked Repeated, or Skipped or Invalid when the user disagrees,
+   - a finding marked Repeated or Open,
    - an item marked blocked (`[!]`): the spec or its check was wrong.
 
    For each problem, give its cause only when the evidence isolates it. When several things could explain it (for example, the build changed several things at once, or there is only one occurrence), write **confounded** and name the possible causes. Do not guess a cause.
 
    Then compare with the earlier retros in the script output. Mark a problem as **repeated** when it already appears in an earlier retro, or when it breaks an always-on rule in `AGENTS.md` that nothing enforces. Give the earlier file or the rule.
 
-3. **Write `plans/<task>/retro.md`** for the user, in plain English, in exactly this format. No ids, timestamps, tables or field labels. With no lesson, Proposed fix says `No lesson.` and there is no Code section.
+3. **Write `plans/<task>/retro.md`** for the user, in exactly this format and nothing more: only the problem the lesson fixes, never the full list from step 2. With no lesson, write the problem line and `Fix: No lesson.`, with no code.
 
    ````markdown
    # <task> — retro
 
    ## What went wrong
 
-   <one line on what went well and what did not>:
+   - <the one problem, one short sentence>
 
-   - <one plain sentence per problem>
-
-   ## Proposed fix
-
-   <the one change in plain words. What it fixes, and what it leaves.>
-
-   ## Code
+   Fix: <the one change, one short sentence>
 
    In `<file>`, <where>:
 
    ```<lang>
    <the exact code or text>
    ```
-
-   <one line: it fails on this task's mistake and passes on the fix.>
    ````
 
    Choose the fix with these rules. They guide the choice and do not appear in the report:

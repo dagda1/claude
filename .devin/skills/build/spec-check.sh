@@ -6,15 +6,16 @@
 #   spec-check.sh <spec.md>          run every check; exit 1 if a check fails or an item is open
 #   spec-check.sh --start <spec.md>  mark a build active (spec must be approved)
 #   spec-check.sh --hook             Stop hook: prints {"decision": "block"} while an item is open; runs no checks
-#   spec-check.sh --finish           end the build and uncommit its commits; refuses while it is not done
+#   spec-check.sh --finish           end the build and uncommit its commits; refuses while it is not done,
+#                                    without review.md, grade.md or summary.md
 #   spec-check.sh --uncommit         end the build and uncommit its commits, done or not
 #
-# Spec item format (see the spec skill):
-#   - [ ] 1. <behaviour>       open
-#   - [x] 1. <behaviour>       done — its check must pass
-#   - [!] 1. <behaviour>       blocked — needs a `blocked:` line; left for the user
-#     - check: `<command>`
-#     - visual: <story>       instead of check: — no test can see it; the user approves it in Storybook
+# Item format (see the spec skill). spec.md, beside it llm.md:
+#   spec.md                        llm.md
+#   - [ ] 1. <behaviour>  open     - 1. <detail>
+#   - [x] 1. <behaviour>  done       - check: `<command>`   its check must pass
+#   - [!] 1. <behaviour>  blocked    - visual: <story>      instead of check: — the user approves it in Storybook
+#     - blocked: <why>    needed under a [!] item
 #
 # The active build and its starting commit are recorded in .git/, so they are never committed.
 # Ending a build resets the branch to the starting commit with --soft: every change the
@@ -36,20 +37,51 @@ RE_CHECK='check: `(.*)`'
 RE_BLOCKED='blocked: .+'
 RE_VISUAL='visual: (.+)'
 
+llm_of() { echo "$(dirname "$1")/llm.md"; }
+
+# The lines under item $2 in the `## Items` section of llm.md $1.
+llm_item() {
+  awk -v n="$2" '
+    /^## / { items = ($0 == "## Items"); cur = ""; next }
+    items && /^- [0-9]+\./ { cur = $2; sub(/\..*/, "", cur); next }
+    items && cur == n
+  ' "$1"
+}
+
 check_spec() {
-  local spec="$1" failed=0 item="" state="" has_check=0 has_blocked=0 visual=""
+  local spec="$1" failed=0 item="" state="" has_blocked=0 llm
 
   [[ -f "$spec" ]] || { echo "spec not found: $spec"; return 1; }
+  llm="$(llm_of "$spec")"
+  [[ -f "$llm" ]] || { echo "llm.md not found: $llm"; return 1; }
 
   end_item() {
     [[ -z "$item" ]] && return
+    local has_check=0 visual="" line cmd
+    while IFS= read -r line; do
+      if [[ "$line" =~ $RE_VISUAL ]]; then
+        visual="${BASH_REMATCH[1]}"
+      elif [[ "$line" =~ $RE_CHECK ]]; then
+        has_check=1
+        cmd="${BASH_REMATCH[1]}"
+        if (cd "$ROOT" && bash -c "$cmd") </dev/null >"$LOG" 2>&1; then
+          echo "item $item: PASS"
+        elif [[ "$state" == "!" ]]; then
+          echo "item $item: BLOCKED (check fails, left for the user)"
+        else
+          echo "item $item: FAIL — $cmd"
+          tail -n 20 "$LOG" | sed 's/^/    /'
+          failed=1
+        fi
+      fi
+    done < <(llm_item "$llm" "$item")
     if [[ $has_check -eq 1 && -n "$visual" ]]; then
       echo "item $item: CHECK AND VISUAL — an item has one or the other"
       failed=1
     elif [[ -n "$visual" ]]; then
       echo "item $item: VISUAL — approve in Storybook: $visual"
     elif [[ $has_check -eq 0 ]]; then
-      echo "item $item: NO CHECK — every item needs a check: or visual: line"
+      echo "item $item: NO CHECK — every item needs a check: or visual: line in llm.md"
       failed=1
     fi
     if [[ "$state" == "!" && $has_blocked -eq 0 ]]; then
@@ -60,32 +92,17 @@ check_spec() {
 
   while IFS= read -r line; do
     if [[ "$line" =~ $RE_ITEM ]]; then
+      local next_state="${BASH_REMATCH[1]}" next_item="${BASH_REMATCH[2]}"
       end_item
-      state="${BASH_REMATCH[1]}"
-      item="${BASH_REMATCH[2]}"
-      has_check=0
+      state="$next_state"
+      item="$next_item"
       has_blocked=0
-      visual=""
       if [[ "$state" == " " ]]; then
         echo "item $item: OPEN"
         failed=1
       fi
     elif [[ -n "$item" && "$line" =~ $RE_BLOCKED ]]; then
       has_blocked=1
-    elif [[ -n "$item" && "$line" =~ $RE_VISUAL ]]; then
-      visual="${BASH_REMATCH[1]}"
-    elif [[ -n "$item" && "$line" =~ $RE_CHECK ]]; then
-      has_check=1
-      local cmd="${BASH_REMATCH[1]}"
-      if (cd "$ROOT" && bash -c "$cmd") >"$LOG" 2>&1; then
-        echo "item $item: PASS"
-      elif [[ "$state" == "!" ]]; then
-        echo "item $item: BLOCKED (check fails, left for the user)"
-      else
-        echo "item $item: FAIL — $cmd"
-        tail -n 20 "$LOG" | sed 's/^/    /'
-        failed=1
-      fi
     fi
   done <"$spec"
   end_item
@@ -111,6 +128,14 @@ unresolved_findings() {
   ' "$1"
 }
 
+# Refuses unless grade.md $1 ends at satisfied or failed, or has had 3 rounds.
+grade_done() {
+  local rounds last
+  rounds=$(grep -c '^Verdict: ' "$1")
+  last=$(grep '^Verdict: ' "$1" | tail -n 1 | awk '{ print $2 }')
+  [[ "$last" == "satisfied" || "$last" == "failed" ]] || ((rounds >= 3))
+}
+
 end_build() {
   git reset --soft "$(cat "$START")" || { echo "reset to $(cat "$START") failed — build left active" >&2; exit 1; }
   git reset -q -- "$(dirname "$(cat "$MARKER")")"
@@ -123,7 +148,8 @@ case "${1:-}" in
     [[ -f "${2:?usage: spec-check.sh --start <spec.md>}" ]] || { echo "no spec at $2 — run /spec first" >&2; exit 1; }
     spec="$(cd "$(dirname "$2")" && pwd)/$(basename "$2")"
     grep -q '^Status: approved' "$spec" || { printf 'spec is not approved: %s\nRead it, then reply "approved" in the /spec session, or change "Status: draft" to "Status: approved" yourself, and run /build again.\n' "$spec" >&2; exit 1; }
-    heavy="$(grep -nE 'check: `.*(pnpm (-r )?(build|test|lint)\b|turbo run)' "$spec" | grep -v -- '--filter')"
+    [[ -f "$(llm_of "$spec")" ]] || { echo "no llm.md beside $spec — run /spec first" >&2; exit 1; }
+    heavy="$(grep -nE 'check: `.*(pnpm (-r )?(build|test|lint)\b|turbo run)' "$(llm_of "$spec")" | grep -v -- '--filter')"
     [[ -z "$heavy" ]] || { printf 'full-repo build/test/lint in a check; CI runs those. Use pnpm --filter <package>:\n%s\n' "$heavy" >&2; exit 1; }
     if [[ -f "$MARKER" && "$(cat "$MARKER")" != "$spec" ]]; then
       echo "an unfinished build for $(cat "$MARKER") is still active — run spec-check.sh --uncommit first" >&2
@@ -161,6 +187,9 @@ case "${1:-}" in
     [[ -f "$review" ]] || { echo "no review: $review — not finishing" >&2; exit 1; }
     unresolved="$(unresolved_findings "$review")"
     [[ -z "$unresolved" ]] || { echo "findings without a Result: line in $review: $(echo $unresolved) — not finishing" >&2; exit 1; }
+    grade="$(dirname "$spec")/grade.md"
+    [[ -f "$grade" ]] || { echo "no grade: $grade — not finishing" >&2; exit 1; }
+    grade_done "$grade" || { echo "grade.md ends at needs_revision before round 3 — not finishing" >&2; exit 1; }
     summary="$(dirname "$spec")/summary.md"
     [[ -f "$summary" ]] || { echo "no summary: $summary — not finishing" >&2; exit 1; }
     long="$(awk '/^- / && NF > 26 { print FILENAME ":" FNR }' "$summary")"
