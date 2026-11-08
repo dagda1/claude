@@ -24,6 +24,12 @@ link() {
 link "$REPO/skills" "$PROJECT/.claude/skills"
 link "$REPO/agents" "$PROJECT/.claude/agents"
 
+# Remove links left by the old workflows/ install.
+if [ -d "$PROJECT/.claude/commands" ]; then
+  find "$PROJECT/.claude/commands" -type l -lname "$REPO/workflows/*" -delete
+  rmdir "$PROJECT/.claude/commands" 2>/dev/null || true
+fi
+
 # Shared permissions and the hooks for /spec and /build: the Stop hook that keeps /build
 # working while a check fails, and the hooks that write plans/<task>/log.md.
 # Per-project extras go in .claude/settings.local.json, which is not committed.
