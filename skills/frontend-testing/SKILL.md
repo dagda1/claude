@@ -38,13 +38,13 @@ expect(screen.getByText('Arsenal')).toBeInTheDocument();
 
 ## Use real data shapes
 
-API-shaped fixtures, not hand-crafted partials. If a component reads from a query, drive the test through that same query path.
+API-shaped fixtures, not made-up partials. If a component reads from a query, drive the test through that same query path.
 
 ## What to flag in review
 
 - `fireEvent` instead of `userEvent` for interactions.
 - `expect(handler).toHaveBeenCalled()` patterns instead of asserting on the rendered DOM.
-- Hand-crafted partial fixtures where the real API shape is available.
+- Made-up partial fixtures where the real API shape is available.
 - Component rendered in isolation when it normally lives inside providers.
 - Missing `await` on `findBy*` / `userEvent` calls.
 - Tests that just render and assert "renders without crashing" — adds no signal.
