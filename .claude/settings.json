@@ -110,6 +110,17 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=\"$CLAUDE_PROJECT_DIR/.claude/skills/build/lint-edit.sh\"; [ -x \"$f\" ] && \"$f\" || true"
+          }
+        ]
+      }
     ]
   }
 }
