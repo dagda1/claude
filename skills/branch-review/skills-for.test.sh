@@ -41,6 +41,7 @@ echo 'export const Plain = () => null;' >src/Plain.tsx
 printf '%s\n' "import { useQuery } from '@tanstack/react-query';" 'export const New = () => null;' >src/New.tsx
 echo 'export const add = (a: number, b: number) => a + b;' >src/util.ts
 echo "it('adds', () => {});" >src/util.test.ts
+echo 'export const Default = {};' >src/Plain.stories.tsx
 echo 'export class AppStack {}' >deploy/app.stack.ts
 echo '# notes' >notes.md
 git add -A && git commit -qm two
@@ -51,10 +52,8 @@ run() { "$SCRIPT" "$FROM" "$TARGET" "$@"; }
 # Every file loads AGENTS.md first, then the review rules.
 out="$(run notes.md)"
 if [[ "$(head -1 <<<"$out")" == "AGENTS.md" ]]; then pass "AGENTS.md is first"; else fail "AGENTS.md is first"; fi
-has "any file loads review-pr-size" "$out" review-pr-size
-has "any file loads review-report-format" "$out" review-report-format
 has "any file loads review-secret-scanning" "$out" review-secret-scanning
-if [[ "$(wc -l <<<"$out" | tr -d ' ')" == 4 ]]; then pass "a markdown file loads nothing else"; else fail "a markdown file loads nothing else: $out"; fi
+if [[ "$(wc -l <<<"$out" | tr -d ' ')" == 2 ]]; then pass "a markdown file loads nothing else"; else fail "a markdown file loads nothing else: $out"; fi
 
 # A test file loads the test skills, not the plain TS skills.
 out="$(run src/util.test.ts)"
@@ -75,6 +74,7 @@ out="$(run src/Plain.tsx)"
 has "component loads frontend-react-typescript" "$out" frontend-react-typescript
 has "component loads frontend-no-boolean-params" "$out" frontend-no-boolean-params
 lacks "component with no import skips frontend-react-query" "$out" frontend-react-query
+lacks "component skips frontend-storybook" "$out" frontend-storybook
 
 out="$(run src/New.tsx)"
 has "added import loads frontend-react-query" "$out" frontend-react-query
@@ -82,6 +82,11 @@ has "added import loads frontend-api-calls" "$out" frontend-api-calls
 
 out="$(run src/Old.tsx)"
 lacks "import that the diff does not add skips frontend-react-query" "$out" frontend-react-query
+
+# A story loads the Storybook skill, not the component skills.
+out="$(run src/Plain.stories.tsx)"
+has "story loads frontend-storybook" "$out" frontend-storybook
+lacks "story skips frontend-react-typescript" "$out" frontend-react-typescript
 
 # A path rule loads the CDK skills.
 out="$(run deploy/app.stack.ts)"

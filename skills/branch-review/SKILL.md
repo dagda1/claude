@@ -62,10 +62,9 @@ Arguments, in order: `$ARGUMENTS`
    - Drop repeated style blocks unless one is a copy of a shared style module.
    - Keep code clones: functions, hooks, logic, column definitions, components.
 
-   Put a `## jscpd` section straight under the verdict. List every kept clone in it, each
-   with what is repeated, both halves as `file:start-end`, and the repeated code (the
-   `fragment`) in a fenced block; do not point elsewhere for them. Then one line per reason
-   for what you dropped. The verdict line gives both counts:
+   Each kept clone is a finding like any other, with what is repeated, both halves as
+   `file:start-end`, and the repeated code (the `fragment`) in a fenced block. Dropped
+   clones are not written down; the verdict line gives both counts and nothing else:
 
    ```
    jscpd: 17 clones reported, 1 kept.
@@ -108,12 +107,11 @@ Arguments, in order: `$ARGUMENTS`
      `/spec`), so the whole task can be audited afterwards. A standalone review writes to
      the system temp dir, **not** a repo folder, so it is never committed by accident.
 
-   - A build round keeps the report in rounds. If the report file already exists,
-     **append** a new `## Round N — since <commit>` section; never rewrite earlier rounds.
-     Otherwise the report is `## Round 1 — since <merge base>`. Each finding is a
-     `### N.k <title>` heading (round, finding) so a finding keeps its id across rounds;
-     `spec-check.sh --finish` reads these headings. A standalone review writes
-     a single report with findings numbered `1`, `2`, ….
+   - The report holds open findings only, in a build round as in a standalone review. A
+     later round adds its new findings to the same groups; it never adds a round section,
+     a history, a list of what passed, or a list of dropped clones. In a build round each
+     finding is a `### N.k <title>` heading (round, finding), so an id is never reused and
+     `spec-check.sh --finish` can read it. A standalone review numbers findings `1`, `2`, ….
 
    - End the chat output with a clickable link to the report, not a bare path — a long
      temp path wraps over several lines and stops being clickable. Use a markdown link
@@ -136,28 +134,20 @@ Arguments, in order: `$ARGUMENTS`
 
 ## Keeping the report current
 
-Touch a finding only when it is resolved — not after every edit, and not to record
-verification runs. How depends on whether this is a build round.
+The report is the live list of what is still open, never a record. Touch a finding only
+when it is resolved — not after every edit, and not to record verification runs.
 
-**In a standalone review** the report file is the live state of the review, not a one-off
-snapshot:
-
-- A finding that is fixed is **deleted**, not annotated. Renumber what is left and
-  correct the count in the verdict line.
+- A finding that is fixed is **deleted**, not annotated. The fix commit
+  (`fix(<task>): review <id> — <what>`) is the record of it.
 - A finding that turns out to be wrong is deleted, and the correction is stated in the
   chat reply.
-- Re-check the rest of the file for entries the fix made stale (verification commands
-  that now pass, "pre-existing" notes that no longer hold).
-
-**In a build round**, and in `/spec`'s `test-review.md`, the report is the record of the
-review: the reader audits it after the fact, so nothing in it is deleted. Add one `Result:`
-line directly under the finding's heading:
-
-- `Result: Fixed — <what changed>`.
-- `Result: Repeated — came back after <finding id> was fixed; left for the user`.
-- `Result: Open` — not acted on; the reader decides.
-
-Keep the Where-to-Comment table and Action Items in step with the results.
+- A finding left for the user stays, with one line under its heading:
+  - `Result: Open — <why it was not fixed>`.
+  - `Result: Repeated — came back after <finding id> was fixed; left for the user`.
+    Check the `review <id>` fix commits to tell a repeat from a new finding.
+- Correct the counts in the verdict line, and re-check the rest of the file for entries a
+  fix made stale.
+- The report never grows a section for what is done.
 
 ## Verifying a claim about backend data
 

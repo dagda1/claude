@@ -13,7 +13,7 @@ The way to do a piece of work. You talk to the agent once, before the build, and
 
 The task name is the branch name. The base branch is the remote's default branch. `plans/` is gitignored except `retro.md` (`install.sh` adds the rules). The active build is recorded in `.git/harness-build*`, never committed.
 
-The Devin copies of these files are in `.devin/`, for copying to a work machine by hand.
+The Devin copies of these files are in `.devin/`, for copying to a work machine.
 
 ## Layout
 
@@ -26,7 +26,7 @@ The Devin copies of these files are in `.devin/`, for copying to a work machine 
 │   └── AGENTS.md      ← copied (not symlinked) into new projects; CLAUDE.md links to it
 ├── .claude/
 │   └── settings.json  ← shared permissions and hooks, symlinked into <project>/.claude/settings.json
-├── .devin/            ← Devin copies of the harness, copied to a work machine by hand
+├── .devin/            ← Devin copies of the harness, copied to a work machine
 └── skills/            ← symlinks into <project>/.claude/skills/
     ├── spec/ build/ retro/ branch-review/  ← the harness, run as /spec, /build, /retro, /branch-review
     ├── assistant-*/   ← always-on behavior (communication, modification policy, output)
@@ -87,7 +87,7 @@ Each project gets one canonical context file, `AGENTS.md` (read natively by Devi
 
 ## Permissions
 
-`.claude/settings.json` here is the shared permission set, symlinked into every project by `install.sh`. It allows what `/build` needs to run without prompts — reads, file edits, the test/typecheck/lint/jscpd commands, `git switch`/`checkout`/`add`/`commit` and the harness scripts. `rm`, `git push`, `git reset` and `git rebase` always ask; `aws`, dev servers, storybook and watch mode are denied. It also holds the hooks: the `/build` Stop hook, which does nothing unless a build is active, and the hooks that write `plans/<task>/log.md`. A third hook (`skills/build/lint-edit.sh`) runs ESLint on each JS/TS file straight after the agent edits it and hands any errors back, so they are fixed before the next edit. Precedence is deny > ask > allow. Machine- or project-specific additions go in the project's `.claude/settings.local.json`, which is unversioned. If a project already has a real (non-symlink) settings.json, install.sh leaves it and tells you to merge.
+`.claude/settings.json` here is the shared permission set, symlinked into every project by `install.sh`. It allows what `/build` needs to run without prompts — reads, file edits, the test/typecheck/lint/jscpd commands, `git switch`/`checkout`/`add`/`commit` and the harness scripts. `rm`, `git push`, `git reset` and `git rebase` always ask; `aws`, dev servers, storybook and watch mode are denied. It also holds the hooks: the `/build` Stop hook, which does nothing unless a build is active, and the hooks that write `plans/<task>/log.md`. A third hook (`skills/build/lint-edit.sh`) runs ESLint on each JS/TS file straight after the agent edits it and returns any errors, so they are fixed before the next edit. Precedence is deny > ask > allow. Machine- or project-specific additions go in the project's `.claude/settings.local.json`, which is unversioned. If a project already has a real (non-symlink) settings.json, install.sh leaves it and tells you to merge.
 
 ## Add a new slash command
 

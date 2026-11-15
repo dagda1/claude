@@ -14,7 +14,7 @@ mkdir -p "$PROJECT/.claude"
 link() {
   local src="$1" dest="$2"
   if [ -e "$dest" ] && [ ! -L "$dest" ]; then
-    echo "NOTE: $dest exists and is not a link — merge $src into it by hand."
+    echo "NOTE: $dest exists and is not a link — merge $src into it yourself."
   else
     ln -sfn "$src" "$dest"
   fi

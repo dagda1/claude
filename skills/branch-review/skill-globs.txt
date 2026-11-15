@@ -6,14 +6,15 @@
 # assistant-* are behaviour skills, not file-scoped.
 
 # Review rules: every review
-* review-pr-size
-* review-report-format
 * review-secret-scanning
 
 # Tests
 @(*.test|*.spec).@(ts|tsx) frontend-testing
 @(*.test|*.spec).@(ts|tsx) no-tautological-tests
 @(*.test|*.spec).@(ts|tsx) code-test-colocation
+
+# Stories
+*.stories.tsx frontend-storybook
 
 # CDK / deploy
 @(*deploy/*|*.stack.ts|*/cdk/*) cdk-construct-conventions
@@ -35,6 +36,12 @@
 !(*.test|*.spec|*.d).ts code-trust-the-types
 !(*.test|*.spec|*.d).ts code-no-defensive-fallbacks
 !(*.test|*.spec|*.d).ts code-test-colocation
+
+# Astro pages and layouts
+*.astro astro-conventions
+*.astro code-style-defaults
+*.astro code-trust-the-types
+*.astro code-no-defensive-fallbacks
 
 # By path, where no import identifies the file
 @(*/api/*|*Query.ts|*Query.tsx|*queries/*) frontend-api-calls

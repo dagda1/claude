@@ -40,7 +40,7 @@ Don't catch query/mutation errors and return defaults. Let `isError` / error bou
 
 ## What to flag in review
 
-- Hand-written query keys as bare strings, not arrays.
+- Query keys as bare strings, not arrays.
 - Mutations that change server state but call no `invalidateQueries`.
 - Mutations that invalidate the primary list but forget activity log / count / aggregate views.
 - Query functions that catch and return `null` on error — should throw so React Query handles it.

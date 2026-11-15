@@ -33,7 +33,7 @@ Work the items in order, one at a time:
 
 A visual item (a `visual:` line in place of a check) has no test and no check. Make the change, commit as in step 4 and tick it. Its story is made with the others below. List it under "Check in Storybook" in the summary; the user approves it there.
 
-After the last item, make each story under `## Stories` in `llm.md`, following the Storybook rules in `frontend-component-structure`. Write no test for a story. Commit: `feat(<task>): story — <export>`.
+After the last item, make each story under `## Stories` in `llm.md`, following the `frontend-storybook` skill. Write no test for a story. Commit: `feat(<task>): story — <export>`.
 
 Never edit an item's check or acceptance test to make it pass. If you are sure the check or test is wrong, mark the item `[!]` in `spec.md`, add `blocked: <why>` under it, and continue with the next item. Blocked is for a wrong check, never for a hard one.
 
@@ -52,11 +52,11 @@ Run at most three rounds. Round 1 reviews the whole branch; each later round rev
 
 1. Note `SINCE=$(git rev-parse HEAD)` for the next round.
 2. Read `.claude/skills/branch-review/SKILL.md` and follow it with arguments `<task> <base> <since>` (`since` is `git merge-base origin/<base> HEAD` in round 1). Run its file analysis (step 3) in the `reviewer` subagent (the Agent tool, `subagent_type: reviewer`) even for a small diff, so the findings never come from the context that wrote the code. The report goes to `plans/<task>/review.md`.
-3. Act on every finding of the round, and record each one with a `Result:` line as that workflow describes:
-   - **Fix** it: one commit per finding, `fix(<task>): review <id> — <what>`. Never stage anything under `plans/`.
-   - **Open**: only when the fix would break a check or the acceptance test. Write what it breaks; the user decides. Never leave a finding Open because the code predates the branch, was only moved, or the spec did not mention it.
-   - **Repeated**: a finding that comes back after it was fixed in an earlier round. Do not fix it again; leave it for the user.
-4. Run `.claude/skills/build/spec-check.sh plans/<task>/spec.md`. A fix that breaks a check is reverted, and the finding is marked Open with what it breaks.
+3. Act on every finding of the round, and keep `review.md` current as that workflow describes: it holds open findings only.
+   - **Fix** it: one commit per finding, `fix(<task>): review <id> — <what>`. Never stage anything under `plans/`. Then delete the finding from `review.md`.
+   - **Open**: only when the fix would break a check or the acceptance test. The finding stays, with `Result: Open — <what it breaks>`; the user decides. Never leave a finding Open because the code predates the branch, was only moved, or the spec did not mention it.
+   - **Repeated**: a finding that comes back after it was fixed in an earlier round. Do not fix it again; the finding stays, with its `Result: Repeated` line, for the user.
+4. Run `.claude/skills/build/spec-check.sh plans/<task>/spec.md`. A fix that breaks a check is reverted, and the finding goes back into `review.md` as Open with what it breaks.
 5. Stop the rounds when the round had no Required findings, when a finding was Repeated, or after round 3. Otherwise start the next round from step 1.
 
 ## Finish

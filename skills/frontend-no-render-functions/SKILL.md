@@ -14,7 +14,7 @@ A plain function that returns JSX looks like a shortcut and costs you everything
 
 - **Returns JSX → it is a component.** PascalCase name, a props interface, its own file, rendered as `<StatusIcon status={…} />`. Never `renderStatusIcon(status)`.
 - **No `render*` / `get*Element` / `*Node` helpers** returning `JSX.Element`, and no local `const icon = cond ? <A /> : <B />` where a component would do.
-- **Lookup maps are fine, rendering through them is not.** Keep `Record<Key, ComponentType>` in the component's own file and let the component pick from it; don't export a function that hands a component back to callers for them to render.
+- **Lookup maps are fine, rendering through them is not.** Keep `Record<Key, ComponentType>` in the component's own file and let the component pick from it; don't export a function that returns a component to callers for them to render.
 - **`styled()` and `keyframes` live in `styles.ts`**, in the component's folder — never inline in a `.tsx`, never in a shared `.ts` module that isn't a `styles.ts`.
 - **Forward `className`** on any component MUI may clone (`Chip` `icon`/`avatar`/`label`, `ListItem` slots). MUI injects its own class; dropping it silently kills the slot styling.
 

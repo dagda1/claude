@@ -88,5 +88,5 @@ import y from './bar';
 - `import x from './foo.js'` (extension on a relative import)
 - `!` non-null assertion
 - `as unknown as` double cast
-- Hand-rolled utility that duplicates a known npm package
+- Utility that duplicates a known npm package
 - Diff touching files outside the scope of the stated task

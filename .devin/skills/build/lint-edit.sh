@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# lint-edit.sh — hook that runs ESLint on a file straight after the agent edits it and hands
-# any errors back to the agent, so they are fixed before the next edit, not in a review round.
+# lint-edit.sh — hook that runs ESLint on a file straight after the agent edits it and returns
+# any errors to the agent, so they are fixed before the next edit, not in a review round.
 #
 # Usage (PostToolUse on the edit and write tools, event JSON on stdin):
 #   .claude/settings.json   matcher "Edit|Write|MultiEdit"
