@@ -6,8 +6,7 @@
 #   spec-check.sh <spec.md>          run every check; exit 1 if a check fails or an item is open
 #   spec-check.sh --start <spec.md>  mark a build active (spec must be approved)
 #   spec-check.sh --hook             Stop hook: prints {"decision": "block"} while an item is open; runs no checks
-#   spec-check.sh --finish           end the build and uncommit its commits; refuses while it is not done,
-#                                    without review.md, grade.md or summary.md
+#   spec-check.sh --finish           end the build and uncommit its commits; refuses while it is not done
 #   spec-check.sh --uncommit         end the build and uncommit its commits, done or not
 #
 # Item format (see the spec skill). spec.md, beside it llm.md:
@@ -128,14 +127,6 @@ unresolved_findings() {
   ' "$1"
 }
 
-# Refuses unless grade.md $1 ends at satisfied or failed, or has had 3 rounds.
-grade_done() {
-  local rounds last
-  rounds=$(grep -c '^Verdict: ' "$1")
-  last=$(grep '^Verdict: ' "$1" | tail -n 1 | awk '{ print $2 }')
-  [[ "$last" == "satisfied" || "$last" == "failed" ]] || ((rounds >= 3))
-}
-
 end_build() {
   git reset --soft "$(cat "$START")" || { echo "reset to $(cat "$START") failed — build left active" >&2; exit 1; }
   git reset -q -- "$(dirname "$(cat "$MARKER")")"
@@ -187,9 +178,6 @@ case "${1:-}" in
     [[ -f "$review" ]] || { echo "no review: $review — not finishing" >&2; exit 1; }
     unresolved="$(unresolved_findings "$review")"
     [[ -z "$unresolved" ]] || { echo "findings without a Result: line in $review: $(echo $unresolved) — not finishing" >&2; exit 1; }
-    grade="$(dirname "$spec")/grade.md"
-    [[ -f "$grade" ]] || { echo "no grade: $grade — not finishing" >&2; exit 1; }
-    grade_done "$grade" || { echo "grade.md ends at needs_revision before round 3 — not finishing" >&2; exit 1; }
     summary="$(dirname "$spec")/summary.md"
     [[ -f "$summary" ]] || { echo "no summary: $summary — not finishing" >&2; exit 1; }
     long="$(awk '/^- / && NF > 26 { print FILENAME ":" FNR }' "$summary")"

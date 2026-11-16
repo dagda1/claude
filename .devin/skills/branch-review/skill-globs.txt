@@ -54,6 +54,7 @@ packages/theme/* styling
 *.@(ts|tsx|js|jsx) bundle-imports lazy\(
 *.@(ts|tsx|js|jsx) responsive-svg from ['"]@visx/|<svg[ >]
 *.@(ts|tsx|js|jsx) prefer-table2 from ['"]@mui/material/Table
+*.tsx prefer-rjsf-forms <(TextField|Select|Switch|DatePicker|DateTimePicker)[ >]|component=["']form["']|<form[ >]|validate[A-Z]|showErrors|helperText=
 *.@(ts|tsx|js|jsx) rjsf-first from ['"](@rjsf/|@harbour/form)
 *.@(ts|tsx|js|jsx) no-unnecessary-effects use(Layout)?Effect\(
 *.@(ts|tsx|js|jsx) frontend-suspense isLoading|<Suspense

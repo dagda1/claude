@@ -7,7 +7,7 @@ Personal repo of reusable Claude Code skills. Symlinked into projects so each pr
 The way to do a piece of work. You talk to the agent once, before the build, and review the changes after it. Checks — not you — correct the agent during the build. Nothing is committed: you review the result as uncommitted changes.
 
 1. **`/spec`** on the task branch — the agent asks you for the task, interviews you (`grilling`), writes `plans/<task>/spec.md` (each item has one `check:` command), writes one acceptance test per item, has the `reviewer` agent review those tests (`test-review.md`), and proves every check fails. You reply `approved`.
-2. **`/build`** in a new session on the same branch — no conversation. The agent makes each check pass test-first, with a checkpoint commit per item. A Stop hook (`skills/build/spec-check.sh`) runs every check and will not let the agent stop while one fails (at most 5 times). Before the reviews, the `grader` agent grades the build against the spec as a rubric — does it do what the spec meant, beyond what the checks prove — for up to 3 rounds, recorded in `grade.md`. Up to 3 review rounds run inside `/build` (`branch-review`, analysis in the `reviewer` agent), recorded in `review.md`. At the end, `spec-check.sh --finish` resets the checkpoint commits, so every change is uncommitted. If a build stops early, run `.claude/skills/build/spec-check.sh --uncommit`.
+2. **`/build`** in a new session on the same branch — no conversation. The agent makes each check pass test-first, with a checkpoint commit per item. A Stop hook (`skills/build/spec-check.sh`) runs every check and will not let the agent stop while one fails (at most 5 times). Up to 3 review rounds run inside `/build` (`branch-review`, analysis in the `reviewer` agent), recorded in `review.md`. At the end, `spec-check.sh --finish` resets the checkpoint commits, so every change is uncommitted. If a build stops early, run `.claude/skills/build/spec-check.sh --uncommit`.
 3. **You review** the uncommitted changes and `plans/<task>/summary.md`, then commit what you keep.
 4. **`/retro`** writes `plans/<task>/retro.md`: each problem with its evidence and a proposed fix to a skill or a check. Its evidence includes `plans/<task>/log.md`, which hooks write: your messages, failed tool calls and Stop-hook blocks.
 
@@ -21,7 +21,7 @@ The Devin copies of these files are in `.devin/`, for copying to a work machine.
 ~/claude/
 ├── agents/            ← symlinks into <project>/.claude/agents/
 │   ├── reviewer.md    ← fresh-context verifier used by /branch-review
-│   └── grader.md      ← fresh-context grader of the build against its spec, used by /build
+│   └── grader.md      ← fresh-context grader of a build against its spec; /build no longer runs it
 ├── templates/
 │   └── AGENTS.md      ← copied (not symlinked) into new projects; CLAUDE.md links to it
 ├── .claude/
@@ -79,7 +79,7 @@ Add new prefixes as new domains appear (`backend-`, `terraform-`, etc.).
 
 ## Subagents
 
-Agents live in `agents/` as markdown with YAML frontmatter (`name`, `description`, `tools`), symlinked to `<project>/.claude/agents/` by `install.sh`. The `reviewer` agent does the file analysis of `/branch-review` (step 3) in a fresh context via the Agent tool, so the findings never come from the context that wrote the code. The main context keeps the fix loop. The `grader` agent does the same for `/build`'s grade step: it judges the change against the spec, and `spec-check.sh --finish` refuses to finish without its `grade.md`.
+Agents live in `agents/` as markdown with YAML frontmatter (`name`, `description`, `tools`), symlinked to `<project>/.claude/agents/` by `install.sh`. The `reviewer` agent does the file analysis of `/branch-review` (step 3) in a fresh context via the Agent tool, so the findings never come from the context that wrote the code. The main context keeps the fix loop.
 
 ## AGENTS.md / CLAUDE.md
 
@@ -87,7 +87,7 @@ Each project gets one canonical context file, `AGENTS.md` (read natively by Devi
 
 ## Permissions
 
-`.claude/settings.json` here is the shared permission set, symlinked into every project by `install.sh`. It allows what `/build` needs to run without prompts — reads, file edits, the test/typecheck/lint/jscpd commands, `git switch`/`checkout`/`add`/`commit` and the harness scripts. `rm`, `git push`, `git reset` and `git rebase` always ask; `aws`, dev servers, storybook and watch mode are denied. It also holds the hooks: the `/build` Stop hook, which does nothing unless a build is active, and the hooks that write `plans/<task>/log.md`. A third hook (`skills/build/lint-edit.sh`) runs ESLint on each JS/TS file straight after the agent edits it and returns any errors, so they are fixed before the next edit. Precedence is deny > ask > allow. Machine- or project-specific additions go in the project's `.claude/settings.local.json`, which is unversioned. If a project already has a real (non-symlink) settings.json, install.sh leaves it and tells you to merge.
+`.claude/settings.json` here is the shared permission set, symlinked into every project by `install.sh`. It allows what `/build` needs to run without prompts — reads, file edits, the test/typecheck/lint/jscpd commands, `git switch`/`checkout`/`add`/`commit` and the harness scripts. `rm`, `git push`, `git reset` and `git rebase` always ask; `aws`, dev servers, storybook and watch mode are denied. It also holds the hooks: the `/build` Stop hook, which does nothing unless a build is active, and the hooks that write `plans/<task>/log.md`. Precedence is deny > ask > allow. Machine- or project-specific additions go in the project's `.claude/settings.local.json`, which is unversioned. If a project already has a real (non-symlink) settings.json, install.sh leaves it and tells you to merge.
 
 ## Add a new slash command
 

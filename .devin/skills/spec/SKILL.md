@@ -13,7 +13,7 @@ Everything for the task lives in `plans/<task>/`. This skill writes two files an
 
 ## Steps
 
-1. **Folder.** `mkdir -p plans/<task>`. If `plans/<task>/spec.md` exists with `Status: draft`, read it and `llm.md`, and carry on from the `## Open` section of `llm.md`. Do not ask again about anything it settles.
+1. **Folder.** `mkdir -p plans/<task>`. If `plans/<task>/spec.md` exists with `Status: draft`, read it and `llm.md`, and carry on from the `## Current` section of `llm.md`, then `## Open`. Do not ask again about anything it settles.
 
 2. **Ask what the task is.** Ask the user to describe the task. Search nothing and read no code before they answer. Every point their answer leaves open is a question for them. Never fill it in yourself.
 
@@ -25,7 +25,7 @@ Everything for the task lives in `plans/<task>/`. This skill writes two files an
 
    Ask about a seam only when the test skills leave it open.
 
-   Write both files as you go, in the formats below. When the user settles a decision, put it in them before you ask the next question. When you verify a fact, add it to `## Facts` in `llm.md` straight away. Keep the questions still to be asked under `## Open` in `llm.md`. The two files are the record of the interview. A new session must be able to resume from them alone.
+   Write both files as you go, in the formats below. When the user settles a decision, put it in them before you ask the next question. When you verify a fact, add it to `## Facts` in `llm.md` straight away. Keep the questions still to be asked under `## Open` in `llm.md`. A decision is settled only as the `grilling` skill defines it. Keep the decision under discussion under `## Current` in `llm.md`, with what the user has said about it so far. A resumed session asks that decision again before anything under `## Open`. The two files are the record of the interview. A new session must be able to resume from them alone.
 
    When a bug fix changes what the user sees, ask the user whether it needs a story that shows the fixed state. A story is only for the user to look at. It is never an item, has no check and no test, and never stands in for a check that a test could make. If they agree, it goes under `## Stories` in `llm.md`. Never ask how a story is tested or checked.
 
@@ -33,7 +33,7 @@ Everything for the task lives in `plans/<task>/`. This skill writes two files an
 
    If a design screenshot is supplied, go through it element by element before approval. Each element that is new, or differs from ours, becomes an item that names it.
 
-4. **Finish both files.** `## Open` in `llm.md` must be empty; delete it. Each item in `llm.md` has exactly one `check:` command or exactly one `visual:` line. An item with neither is not ready — go back to the interview, do not invent one.
+4. **Finish both files.** `## Current` and `## Open` in `llm.md` must be empty; delete them. Each item in `llm.md` has exactly one `check:` command or exactly one `visual:` line. An item with neither is not ready — go back to the interview, do not invent one.
 
    Put every fact you verified about the code during the interview under `## Facts` in `llm.md`, with the file and line where you found it. Write the fact itself ("`status` in `api/types.ts:42` is `'open' | 'closed'`"), not how to find it, so `/build` does not have to find it again. Only verified facts: a guessed fact is worse than none. Say how each fact is verified, and take each one as far as is cheap:
 
@@ -49,7 +49,7 @@ Everything for the task lives in `plans/<task>/`. This skill writes two files an
 
    Expected values come from the spec, never from the code.
 
-6. **Review the tests.** First run `git add -N <new test files>` so `git diff` shows them; this commits nothing. Then use the `reviewer` subagent: give it the test files, the same test skills, and the uncommitted diff from the branch's merge base (`git diff $(git merge-base origin/dev HEAD)`). It reviews against the skills only — it did not write the tests. Write its findings to `plans/<task>/test-review.md` and act on each one with a `Result:` line (Fixed with what changed, or Open with what the fix would break), in the format of a build round of the `branch-review` skill but with no commit ids. Repeat the review on the fixes until it reports no Required findings, at most three rounds.
+6. **Review the tests.** First run `git add -N <new test files>` so `git diff` shows them; this commits nothing. Then use the `reviewer` subagent: give it the test files, the same test skills, and the uncommitted diff from the branch's merge base (`git diff $(git merge-base origin/dev HEAD)`). It reviews against the skills only — it did not write the tests. Write its findings to `plans/<task>/test-review.md` and act on each one as the `branch-review` skill's "Keeping the report current" describes: delete a fixed finding, and give one you leave a `Result: Open — <what the fix would break>` line. Repeat the review on the fixes until it reports no Required findings, at most three rounds.
 
 7. **Prove they fail.** Run `.devin/skills/build/spec-check.sh plans/<task>/spec.md`. Every item with a check must report `FAIL` for the right reason (the behaviour is missing, not a typo or a missing import). A check that passes now proves nothing — fix it. A visual item reports `VISUAL`. When no item has a test, skip steps 6 and 7's test work and link no test files or `test-review.md` in step 8.
 
@@ -96,6 +96,10 @@ Status: draft
 ## Stories
 
 - <Story file and export>: <the state it shows>.
+
+## Current
+
+- <The decision under discussion, and what the user has said about it so far.>
 
 ## Open
 

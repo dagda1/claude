@@ -23,8 +23,10 @@ The question is yes/no by default. Only when you cannot pick between two or more
 
 Start from the task, not from what you found. The question makes sense to someone who has read nothing else. No icons, no jargon.
 
-Each round the user answers reshapes the tree: settled decisions push the frontier outward and unblock questions that depended on them. Recompute the frontier and ask the next round.
+A decision is settled only when the user gives a clear answer to it: yes, no, or one of the options, possibly with changes you can restate in one sentence. Anything else leaves it open: a question back, a doubt, "it depends", a partial answer, a correction of your premise, or a reply about something else. While it is open, stay on it. Answer their question or find the fact they need, restate the decision with what changed, and ask it again. Ask no other question until it is settled. When it is settled, restate it in one sentence as the record, then recompute the frontier.
 
-Finding _facts_ is your job, never the user's. When a frontier question needs a fact from the environment (filesystem, tools, etc.), dispatch a sub-agent to find it; don't ask the user for anything you could look up yourself. Don't block on it: a running exploration is an unsettled prerequisite, so only the questions downstream of it wait for the sub-agent to report; ask from the rest of the frontier now. The _decisions_ are the user's: put each to them and wait.
+Each settled decision reshapes the tree: it pushes the frontier outward and unblocks questions that depended on it. Recompute the frontier and ask the next round.
+
+Finding _facts_ is your job, never the user's. When a frontier question needs a fact from the environment (filesystem, tools, etc.), dispatch a sub-agent to find it; don't ask the user for anything you could look up yourself. Find the fact before you ask the question that needs it. Never open a new question while the current one is unsettled. The _decisions_ are the user's: put each to them and wait.
 
 The session is done when the frontier is empty: every branch of the design tree visited, nothing left silently assumed. Do not act on it until the user confirms you have reached a shared understanding.

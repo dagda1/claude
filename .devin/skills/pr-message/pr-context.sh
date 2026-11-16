@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # pr-context.sh — prints the short context a PR message needs, without the full diff:
-# the house style, the commit subjects, the changed files, and the spec goal and items
-# when plans/<branch>/spec.md exists.
+# the house style, the commit subjects and the changed files.
 # Usage: pr-context.sh [base]    (base defaults to dev)
 set -euo pipefail
 
@@ -22,10 +21,3 @@ git log --format=%s "$MERGE_BASE..HEAD"
 echo
 echo "## Changed files"
 git diff --stat "$MERGE_BASE..HEAD"
-
-SPEC="plans/$BRANCH/spec.md"
-if [[ -f "$SPEC" ]]; then
-  echo
-  echo "## Spec goal and items"
-  awk '/^## (Goal|Items)/ { on = 1; print; next } /^## / { on = 0 } on' "$SPEC"
-fi

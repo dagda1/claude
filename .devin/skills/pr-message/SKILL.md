@@ -20,8 +20,8 @@ Write a concise PR message in plain English to a markdown file in the tmp folder
 ## Steps
 
 1. Gather context with the script (do not show this in the output). It prints the house
-   style, the commit subjects, the changed files, the spec goal and items, `MERGE_BASE` and
-   `MESSAGE_FILE`. It does not print the full diff:
+   style, the commit subjects, the changed files, `MERGE_BASE` and `MESSAGE_FILE`. It does
+   not print the full diff:
 
    ```bash
    .devin/skills/pr-message/pr-context.sh "$1"
@@ -30,9 +30,9 @@ Write a concise PR message in plain English to a markdown file in the tmp folder
 2. Give the whole script output to the `writer` subagent, run in the foreground so it can
    be approved to write outside the repo. Tell it to write the message to
    `MESSAGE_FILE` and to follow the Title rules, Bullet rules and Format in
-   `.devin/skills/pr-message/SKILL.md`. Tell it to read a file's diff
-   (`git diff <MERGE_BASE>..HEAD -- <file>`) only when the commits and spec do not explain
-   that file. Do not read the diff yourself.
+   `.devin/skills/pr-message/SKILL.md`. Tell it to read the full diff
+   (`git diff <MERGE_BASE>..HEAD`) before writing. Do not read the diff yourself. Relay the
+   writer's message unchanged; do not reword it.
 
    `MESSAGE_FILE` is in the system temp dir, outside the repo. Write outside the repo, **not** to a repo folder: a repo `tmp/` is gitignored and
    Cascade's write tool silently skips gitignored paths, while any non-ignored repo folder
@@ -56,10 +56,13 @@ only.
   "Improved activity view".
 - Match the repo's existing subjects: the "House style" part of the script output shows
   them, including whether a `feat(scope):` prefix is in use.
+- Never put a ticket number or branch name (`DXCOE-1234`) in the title or the bullets, even
+  where some house-style subjects have one.
 
 ## Bullet rules
 
 - Every bullet must earn its place. If a reviewer would still understand the PR without it, cut it.
+- Each bullet names a concrete change a reviewer can check: what was added, removed or moved, with counts where known.
 - One short sentence per bullet. No sub-bullets, no clauses stacked with commas.
 - Do not list every change. Give the point of the PR and only what a reviewer must know.
 - Plain English, zero context assumed. No code, file paths, function names, or jargon.

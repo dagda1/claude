@@ -38,22 +38,13 @@ After the last item, make each story under `## Stories` in `llm.md`, following t
 
 Never edit an item's check or acceptance test to make it pass. If you are sure the check or test is wrong, mark the item `[!]` in `spec.md`, add `blocked: <why>` under it, and continue with the next item. Blocked is for a wrong check, never for a hard one.
 
-## Grade
-
-After the stories, grade the build against the spec, as a rubric. Run at most three grading rounds.
-
-1. Run the `grader` subagent with the task, `dev` and the round number. It returns `Verdict: satisfied`, `needs_revision` or `failed`.
-2. Append the round to `plans/<task>/grade.md`: a `## Round <n>` heading, then its `Verdict:` line and the grader's lines unchanged.
-3. On `needs_revision`, fix each gap test-first as in Items, one commit per gap: `fix(<task>): grade <n> — <what>`. Never edit a check or acceptance test to close a gap. Then start the next round.
-4. Stop at `satisfied`, at `failed`, or after round 3. A `failed` verdict, or `needs_revision` after round 3, goes under "Needs your decision" in the summary.
-
 ## Review rounds
 
 Run at most three rounds. Round 1 reviews the whole branch; each later round reviews only the commits since the previous round started.
 
 1. Note `SINCE=$(git rev-parse HEAD)` for the next round.
 2. Follow the `branch-review` skill with arguments `<task> dev <since>` (`since` is `git merge-base origin/dev HEAD` in round 1). Run its file analysis (step 3) in the `reviewer` subagent even for a small diff, so the findings never come from the context that wrote the code. The report goes to `plans/<task>/review.md`.
-3. Act on every finding of the round, and record each one with a `Result:` line as that workflow describes:
+3. Act on every finding of the round, as that workflow's "Keeping the report current" describes: delete a fixed finding from `review.md`, and give an Open or Repeated one a `Result:` line:
    - **Fix** it: one commit per finding, `fix(<task>): review <id> — <what>`. Never stage anything under `plans/`.
    - **Open**: only when the fix would break a check or the acceptance test. Write what it breaks; the user decides. Never leave a finding Open because the code predates the branch, was only moved, or the spec did not mention it.
    - **Repeated**: a finding that comes back after it was fixed in an earlier round. Do not fix it again; leave it for the user.
@@ -73,11 +64,11 @@ Run at most three rounds. Round 1 reviews the whole branch; each later round rev
 ```markdown
 # <task> — build summary
 
-Verdict: <verdict of the last review> · Rounds: <n> · Stopped because: <no Required findings | repeated finding | 3 rounds> · Grade: <last grade verdict> after <n> rounds
+Verdict: <verdict of the last review> · Rounds: <n> · Stopped because: <no Required findings | repeated finding | 3 rounds>
 
 ## Needs your decision
 
-- <Every blocked item, open or repeated finding, skipped finding, and unresolved grade gap — one line each, with its id in review.md or its round in grade.md.>
+- <Every blocked item, open or repeated finding, and skipped finding — one line each, with its id in review.md.>
 
 ## Check in Storybook
 

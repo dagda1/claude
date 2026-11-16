@@ -42,6 +42,7 @@ printf '%s\n' "import { useQuery } from '@tanstack/react-query';" 'export const 
 echo 'export const add = (a: number, b: number) => a + b;' >src/util.ts
 echo "it('adds', () => {});" >src/util.test.ts
 echo 'export const Default = {};' >src/Plain.stories.tsx
+echo 'export const Signup = () => <TextField value="" helperText="x" />;' >src/Signup.tsx
 echo 'export class AppStack {}' >deploy/app.stack.ts
 echo '# notes' >notes.md
 git add -A && git commit -qm two
@@ -74,7 +75,11 @@ out="$(run src/Plain.tsx)"
 has "component loads frontend-react-typescript" "$out" frontend-react-typescript
 has "component loads frontend-no-boolean-params" "$out" frontend-no-boolean-params
 lacks "component with no import skips frontend-react-query" "$out" frontend-react-query
+lacks "component with no form field skips frontend-prefer-rjsf-forms" "$out" frontend-prefer-rjsf-forms
 lacks "component skips frontend-storybook" "$out" frontend-storybook
+
+out="$(run src/Signup.tsx)"
+has "added form field loads frontend-prefer-rjsf-forms" "$out" frontend-prefer-rjsf-forms
 
 out="$(run src/New.tsx)"
 has "added import loads frontend-react-query" "$out" frontend-react-query

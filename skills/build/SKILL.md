@@ -37,15 +37,6 @@ After the last item, make each story under `## Stories` in `llm.md`, following t
 
 Never edit an item's check or acceptance test to make it pass. If you are sure the check or test is wrong, mark the item `[!]` in `spec.md`, add `blocked: <why>` under it, and continue with the next item. Blocked is for a wrong check, never for a hard one.
 
-## Grade
-
-After the stories, grade the build against the spec, as a rubric. Run at most three grading rounds.
-
-1. Run the `grader` subagent (the Agent tool, `subagent_type: grader`) with the task, the base branch and the round number. It returns `Verdict: satisfied`, `needs_revision` or `failed`.
-2. Append the round to `plans/<task>/grade.md`: a `## Round <n>` heading, then its `Verdict:` line and the grader's lines unchanged.
-3. On `needs_revision`, fix each gap test-first as in Items, one commit per gap: `fix(<task>): grade <n> — <what>`. Never edit a check or acceptance test to close a gap. Then start the next round.
-4. Stop at `satisfied`, at `failed`, or after round 3. A `failed` verdict, or `needs_revision` after round 3, goes under "Needs your decision" in the summary.
-
 ## Review rounds
 
 Run at most three rounds. Round 1 reviews the whole branch; each later round reviews only the commits since the previous round started.
@@ -72,11 +63,11 @@ Run at most three rounds. Round 1 reviews the whole branch; each later round rev
 ```markdown
 # <task> — build summary
 
-Verdict: <verdict of the last review> · Rounds: <n> · Stopped because: <no Required findings | repeated finding | 3 rounds> · Grade: <last grade verdict> after <n> rounds
+Verdict: <verdict of the last review> · Rounds: <n> · Stopped because: <no Required findings | repeated finding | 3 rounds>
 
 ## Needs your decision
 
-- <Every blocked item, open or repeated finding, skipped finding, and unresolved grade gap — one line each, with its id in review.md or its round in grade.md.>
+- <Every blocked item, open or repeated finding, and skipped finding — one line each, with its id in review.md.>
 
 ## Check in Storybook
 

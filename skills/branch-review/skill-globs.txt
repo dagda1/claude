@@ -60,3 +60,4 @@
 *.@(ts|tsx|js|jsx) frontend-bundle-imports lazy\(
 *.@(ts|tsx|js|jsx) frontend-mui-theming theme\.palette|@mui/material/styles|sx=
 *.@(ts|tsx|js|jsx) no-unnecessary-effects use(Layout)?Effect\(
+*.tsx frontend-prefer-rjsf-forms <(TextField|Select|Switch|DatePicker|DateTimePicker)[ >]|component=["']form["']|<form[ >]|validate[A-Z]|showErrors|helperText=

@@ -27,15 +27,7 @@
           "command": "\"$DEVIN_PROJECT_DIR\"/.devin/skills/build/log-event.sh tool"
         }
       ]
-    },
-    {
-      "matcher": "edit|write",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "\"$DEVIN_PROJECT_DIR\"/.devin/skills/build/lint-edit.sh"
-        }
-      ]
     }
   ]
 }
+

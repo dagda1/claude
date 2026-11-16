@@ -1,6 +1,6 @@
 ---
 name: pr-comments
-description: Review a branch and output paste-ready PR comments grouped by file, one comment per line, bugs only
+description: Review a branch and output paste-ready PR comments grouped by file, one comment per line
 argument-hint: '[branch] [base]'
 triggers:
   - user
@@ -45,14 +45,24 @@ no "consider".
 3. **Analyze each batch** in the `reviewer` subagent, one per batch, all launched in the
    same message. Give each one its chunk file paths, `MERGE_BASE` and `origin/$TARGET`.
    Tell it to read a whole file (`git show origin/"$TARGET":"$file"`) only when the diff
-   context does not explain a line, and to list every suspected bug on the changed lines
-   and drop nothing. Merge their lists.
+   context does not explain a line, and to list every suspected problem on the changed
+   lines (bugs, skill violations and duplication) and drop nothing. Merge their lists:
+   where two reviewers report the same problem on the same line, keep one.
 
-4. **Test each suspected bug** against the codebase: check callers and existing
-   patterns, then name the input, the code path and the wrong result. Drop it only
-   when this shows the behaviour is correct. Keep it when the wrong result is shown.
+4. **Test each suspected problem** against the codebase. For a bug, check callers and
+   existing patterns, then name the input, the code path and the wrong result; drop it
+   only when this shows the behaviour is correct. For a skill violation, confirm the
+   changed line breaks the rule as the skill words it; drop it only when it does not.
 
-5. **Write the PR comments to a markdown file** in the **system temp dir** (outside the
+5. **Check for duplication.** For every function, hook, component, constant, schema and
+   column definition the diff adds, search `origin/$TARGET` for one that already does the
+   same job (`git grep -n <term> origin/"$TARGET" -- apps packages`), searching by what it
+   does as well as by its name. Also look for the same logic written twice inside the
+   diff. Read both copies before keeping one: drop it when they differ in behaviour, not
+   just in names. Each kept duplicate is a comment on the added copy that names the
+   existing one by path and symbol.
+
+6. **Write the PR comments to a markdown file** in the **system temp dir** (outside the
    repo working tree), named after the branch with `/` replaced by `-`:
 
    ```bash
@@ -70,17 +80,25 @@ no "consider".
 
 ## Rules
 
-- Bugs only: wrong behaviour, crash, regression, broken logic, security, and clear
-  performance defects (needless re-renders, work in render/loops that should be
-  memoised or hoisted, O(n^2) over real data). Flag a skill violation only when
-  breaking it changes runtime behaviour or produces a defect, never for pure
-  style/naming/formatting.
+- Comment on everything `branch-review` would report on the changed lines: bugs,
+  performance defects, skill violations and duplication (step 5).
 - The comments file is the output the user asked for. Reply-brevity rules apply to
-  the chat message only, never to which bugs go in the file.
+  the chat message only, never to which comments go in the file.
 - One comment, one line. Never a range or multiple line numbers per comment.
 - Only comment on lines this PR changed. Never invent a line in an unchanged file.
 - Every comment states why, in one sentence: the wrong behaviour or the rule broken.
   Never code alone.
+- Every comment stands alone. The reader sees one comment on one line of the PR and
+  nothing else: not the other comments, not this review, not the skills. So:
+  - Never point at another comment: no "same as above", "see L42", "as noted", "also
+    here", "like the previous one". When a mistake repeats, each line gets its own full
+    comment.
+  - Never mention the review's own workings: reviewers, batches, chunks, findings,
+    rounds, skill names, "the rule", "the pattern", "the project standard".
+  - Name every function, component, file and value the reader needs by path or symbol,
+    and state the rule itself rather than where it is written.
+- One problem, one comment. Before writing the file, read every comment against the
+  others and merge any two that describe the same problem on the same line.
 - Add a code snippet after that sentence whenever code makes the fix clearer. Keep it
   to the few lines that change; if the fix is too large to show that way, the sentence
   carries it alone.
@@ -111,12 +129,13 @@ L67
 Guard `items` before indexing, this throws on first render when empty.
 ````
 
-If a real bug's fix lives in an unchanged file, add one comment under `## General`
-at the end (no line number). Omit the heading if empty. If there are no bugs, write
+If a real problem's fix lives in an unchanged file, add one comment under `## General`
+at the end (no line number). Omit the heading if empty. If there are no problems, write
 one line in the file and say so in chat.
 
 ## Re-runs
 
 When asked to check again, re-review and rewrite the same file with the outstanding
-list only. Drop
-comments that are now fixed, keep what is still unresolved.
+list only. Drop comments that are now fixed, keep what is still unresolved. Every
+comment in the rewritten file still stands alone: never "still not fixed" or "as in the
+last run".
